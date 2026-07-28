@@ -65,7 +65,7 @@
     .btn-exportar { width:auto; min-width:180px; background:#176b43; border-color:#2a9f69; padding:10px 14px; }
     .btn-exportar:hover { border-color:#39d98a; }
     .chart-wrap { height:350px; }
-    .chart-wrap-origen { height:420px; }
+    .chart-wrap-origen { height:500px; overflow-x:auto; overflow-y:hidden; padding-bottom:8px; }
     .panel-origen { margin-top:0; }
     .warning { display:none; margin-bottom:16px; background:#392b16; border:1px solid #7a5720; color:#ffd68b; border-radius:12px; padding:12px 14px; }
     .error { background:#421f27; border-color:#863344; color:#ffc0c8; }
@@ -78,7 +78,7 @@
     .empty { color:var(--muted); text-align:center; padding:30px; }
     .field-note { color:var(--muted); font-size:12px; margin-top:10px; line-height:1.5; }
     @media(max-width:1050px){ .filters{grid-template-columns:repeat(3,1fr)} .cards{grid-template-columns:repeat(2,1fr)} .grid{grid-template-columns:1fr} }
-    @media(max-width:650px){ .container{width:94%;padding-top:16px}.header{display:block}.status{text-align:left;margin-top:8px}.filters{grid-template-columns:1fr 1fr}.cards{grid-template-columns:1fr 1fr}.card{padding:14px}.card .value{font-size:25px}.chart-wrap{height:300px}.chart-wrap-origen{height:440px}.panel{padding:14px} }
+    @media(max-width:650px){ .container{width:94%;padding-top:16px}.header{display:block}.status{text-align:left;margin-top:8px}.filters{grid-template-columns:1fr 1fr}.cards{grid-template-columns:1fr 1fr}.card{padding:14px}.card .value{font-size:25px}.chart-wrap{height:300px}.chart-wrap-origen{height:500px}.panel{padding:14px} }
   </style>
 </head>
 <body>
@@ -607,49 +607,66 @@ function renderGraficos(){
 
   const dep=[...agruparMcs(r=>texto(r,'origen'),viajes).entries()].sort((a,b)=>b[1]-a[1]);
   if(graficoDeposito)graficoDeposito.destroy();
-  graficoDeposito=new Chart(document.getElementById('graficoDeposito'),{
+
+  const canvasOrigen = document.getElementById('graficoDeposito');
+  const contenedorOrigen = canvasOrigen.parentElement;
+  const anchoDisponible = contenedorOrigen.clientWidth || 900;
+  const anchoNecesario = Math.max(anchoDisponible, dep.length * (window.innerWidth <= 650 ? 72 : 82));
+  canvasOrigen.style.minWidth = `${anchoNecesario}px`;
+
+  graficoDeposito=new Chart(canvasOrigen,{
     type:'bar',
-    data:{labels:dep.map(x=>x[0]),datasets:[{label:'MCS',data:dep.map(x=>x[1]),borderWidth:1,borderRadius:6}]},
-    plugins:[etiquetasFinBarra],
+    data:{
+      labels:dep.map(x=>x[0]),
+      datasets:[{
+        label:'MCS',
+        data:dep.map(x=>x[1]),
+        borderWidth:1,
+        borderRadius:5,
+        maxBarThickness:54,
+        categoryPercentage:0.78,
+        barPercentage:0.82
+      }]
+    },
+    plugins:[etiquetasColumnas],
     options:{
       ...base,
-      indexAxis:'y',
-      layout:{padding:{left:16,right:125}},
-      plugins:{...base.plugins,legend:{display:false},tooltip:{callbacks:{label:(ctx)=>`${fmt2.format(ctx.parsed.x)} MCS`}}},
+      layout:{padding:{top:24,left:8,right:8,bottom:8}},
+      plugins:{
+        ...base.plugins,
+        legend:{display:false},
+        tooltip:{callbacks:{label:(ctx)=>`${fmt2.format(ctx.parsed.y)} MCS`}}
+      },
       scales:{
-        x:{beginAtZero:true,ticks:{color:'#aebbd0'},grid:{color:'rgba(255,255,255,.07)'},title:{display:true,text:'MCS',color:'#aebbd0'}},
-        y:{
-          afterFit:(scale)=>{
-            scale.width = window.innerWidth <= 650 ? 205 : 300;
-          },
+        x:{
           ticks:{
             color:'#aebbd0',
-            padding:12,
-            align:'start',
-            crossAlign:'far',
+            autoSkip:false,
+            maxRotation:55,
+            minRotation:55,
+            padding:8,
             callback:function(value){
               const etiqueta = String(this.getLabelForValue(value) ?? '');
-              if (window.innerWidth > 650 || etiqueta.length <= 24) return etiqueta;
-
+              const max = window.innerWidth <= 650 ? 16 : 22;
+              if (etiqueta.length <= max) return etiqueta;
               const palabras = etiqueta.split(/\s+/);
-              const lineas = [];
-              let linea = '';
-
-              palabras.forEach(palabra => {
-                const candidata = linea ? `${linea} ${palabra}` : palabra;
-                if (candidata.length > 22 && linea) {
-                  lineas.push(linea);
-                  linea = palabra;
-                } else {
-                  linea = candidata;
-                }
+              const lineas=[];
+              let linea='';
+              palabras.forEach(palabra=>{
+                const candidata=linea ? `${linea} ${palabra}` : palabra;
+                if(candidata.length>max && linea){lineas.push(linea);linea=palabra;}else{linea=candidata;}
               });
-
-              if (linea) lineas.push(linea);
-              return lineas;
+              if(linea) lineas.push(linea);
+              return lineas.slice(0,3);
             }
           },
           grid:{color:'rgba(255,255,255,.05)'}
+        },
+        y:{
+          beginAtZero:true,
+          ticks:{color:'#aebbd0'},
+          grid:{color:'rgba(255,255,255,.07)'},
+          title:{display:true,text:'MCS',color:'#aebbd0'}
         }
       }
     }
