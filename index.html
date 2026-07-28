@@ -5,7 +5,6 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Dashboard Recibo Resúmenes</title>
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-  <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
   <style>
     :root {
       --bg: #0b1220;
@@ -730,42 +729,64 @@ function filasDetalleOrdenadas(){
   return [...datosFiltrados].sort(compararRemitos);
 }
 function exportarExcel(){
-  if (typeof XLSX === 'undefined') {
-    alert('No se pudo cargar el componente de exportación a Excel.');
-    return;
-  }
   const filas = filasDetalleOrdenadas();
+
   if (!filas.length) {
     alert('No hay registros para exportar con los filtros seleccionados.');
     return;
   }
-  const encabezados = ['Año','Mes','FechaRto','Depósito','Remito','Tipo Remito','Monte','NombreProd2','RtoOrigen','Matricula','Neto','Metros Cubicos','CONTRATO'];
-  const datos = filas.map(r => ({
-    'Año': valorCampo(r,'anio'),
-    'Mes': nombreMesRegistro(r),
-    'FechaRto': formatearFecha(fechaRegistro(r)),
-    'Depósito': valorCampo(r,'deposito'),
-    'Remito': valorCampo(r,'remito')==null ? '' : String(valorCampo(r,'remito')),
-    'Tipo Remito': valorCampo(r,'tipoRemito'),
-    'Monte': valorCampo(r,'monte'),
-    'NombreProd2': valorCampo(r,'producto'),
-    'RtoOrigen': valorCampo(r,'rtoOrigen')==null ? '' : String(valorCampo(r,'rtoOrigen')),
-    'Matricula': valorCampo(r,'matricula'),
-    'Neto': numero(valorCampo(r,'neto')),
-    'Metros Cubicos': numero(valorCampo(r,'metrosCubicos')),
-    'CONTRATO': valorCampo(r,'contrato')
-  }));
-  const hoja = XLSX.utils.json_to_sheet(datos, {header: encabezados});
-  hoja['!autofilter'] = {ref: `A1:M${datos.length + 1}`};
-  hoja['!cols'] = [
-    {wch:8},{wch:12},{wch:13},{wch:18},{wch:13},{wch:20},{wch:28},
-    {wch:22},{wch:13},{wch:14},{wch:12},{wch:16},{wch:18}
-  ];
-  const libro = XLSX.utils.book_new();
-  XLSX.utils.book_append_sheet(libro, hoja, 'Detalle');
-  const seleccion = seleccionFiltros();
-  const partes = ['recibo_resumenes', seleccion.anio || 'todos', seleccion.mes ? MESES[Number(seleccion.mes)-1] : 'todos'];
-  XLSX.writeFile(libro, `${partes.join('_')}.xlsx`);
+
+  try {
+    const encabezados = [
+      'Año','Mes','FechaRto','Depósito','Remito','Tipo Remito','Monte',
+      'NombreProd2','RtoOrigen','Matricula','Neto','Metros Cubicos','CONTRATO'
+    ];
+
+    const escaparCSV = valor => {
+      const texto = valor === null || valor === undefined ? '' : String(valor);
+      return `"${texto.replace(/"/g, '""')}"`;
+    };
+
+    const filasCSV = filas.map(r => [
+      valorCampo(r,'anio'),
+      nombreMesRegistro(r),
+      formatearFecha(fechaRegistro(r)),
+      valorCampo(r,'deposito'),
+      valorCampo(r,'remito') == null ? '' : String(valorCampo(r,'remito')),
+      valorCampo(r,'tipoRemito'),
+      valorCampo(r,'monte'),
+      valorCampo(r,'producto'),
+      valorCampo(r,'rtoOrigen') == null ? '' : String(valorCampo(r,'rtoOrigen')),
+      valorCampo(r,'matricula'),
+      numero(valorCampo(r,'neto')).toLocaleString('es-UY', {minimumFractionDigits:2, maximumFractionDigits:2, useGrouping:false}),
+      numero(valorCampo(r,'metrosCubicos')).toLocaleString('es-UY', {minimumFractionDigits:2, maximumFractionDigits:2, useGrouping:false}),
+      valorCampo(r,'contrato')
+    ].map(escaparCSV).join(';'));
+
+    // BOM UTF-8 para que Excel reconozca correctamente tildes, ñ y separador decimal con coma.
+    const contenido = '\uFEFF' + encabezados.map(escaparCSV).join(';') + '\r\n' + filasCSV.join('\r\n');
+    const blob = new Blob([contenido], {type:'text/csv;charset=utf-8;'});
+    const url = URL.createObjectURL(blob);
+    const enlace = document.createElement('a');
+
+    const seleccion = seleccionFiltros();
+    const mesArchivo = seleccion.mes ? MESES[Number(seleccion.mes)-1] : 'todos';
+    const nombreArchivo = `recibo_resumenes_${seleccion.anio || 'todos'}_${mesArchivo}.csv`;
+
+    enlace.href = url;
+    enlace.download = nombreArchivo;
+    enlace.style.display = 'none';
+    document.body.appendChild(enlace);
+    enlace.click();
+
+    setTimeout(() => {
+      URL.revokeObjectURL(url);
+      enlace.remove();
+    }, 1000);
+  } catch (error) {
+    console.error('Error al exportar:', error);
+    alert('No se pudo generar el archivo para Excel. Revisá la consola del navegador para más detalles.');
+  }
 }
 function renderTabla(){
   const columnas=[
