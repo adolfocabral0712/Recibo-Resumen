@@ -1,0 +1,848 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Dashboard Recibo Resúmenes</title>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+  <style>
+    :root {
+      --bg: #0b1220;
+      --panel: #111b2e;
+      --panel2: #17243a;
+      --border: #263650;
+      --text: #edf3fb;
+      --muted: #9eacc2;
+      --accent: #48b0f7;
+      --good: #39d98a;
+      --danger: #ff6b6b;
+      --shadow: 0 12px 28px rgba(0,0,0,.25);
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      background: linear-gradient(145deg, #09101d 0%, #101a2c 100%);
+      color: var(--text);
+      font-family: Inter, Segoe UI, Arial, sans-serif;
+      min-height: 100vh;
+    }
+    .container { width: min(1500px, 96%); margin: 0 auto; padding: 24px 0 40px; }
+    .header { display:flex; justify-content:space-between; gap:20px; align-items:flex-end; margin-bottom:20px; }
+    h1 { margin:0; font-size:clamp(24px,3vw,40px); letter-spacing:-.8px; }
+    .subtitle { color:var(--muted); margin-top:7px; }
+    .status { color:var(--muted); font-size:13px; text-align:right; }
+    .filters {
+      display:grid;
+      grid-template-columns: repeat(5, minmax(150px, 1fr)) auto;
+      gap:12px;
+      background:var(--panel);
+      border:1px solid var(--border);
+      border-radius:18px;
+      padding:16px;
+      box-shadow:var(--shadow);
+      margin-bottom:18px;
+    }
+    label { display:block; color:var(--muted); font-size:12px; font-weight:700; margin:0 0 7px 2px; text-transform:uppercase; letter-spacing:.5px; }
+    select, button {
+      width:100%; border:1px solid var(--border); background:var(--panel2); color:var(--text);
+      border-radius:11px; padding:11px 12px; font-size:14px; outline:none;
+    }
+    select:focus { border-color:var(--accent); }
+    button { cursor:pointer; font-weight:700; align-self:end; transition:.2s; }
+    button:hover { transform:translateY(-1px); border-color:var(--accent); }
+    .cards { display:grid; grid-template-columns:repeat(4, 1fr); gap:14px; margin-bottom:18px; }
+    .card { background:var(--panel); border:1px solid var(--border); border-radius:17px; padding:18px; box-shadow:var(--shadow); }
+    .card .name { color:var(--muted); font-size:12px; font-weight:700; text-transform:uppercase; letter-spacing:.6px; }
+    .card .value { font-size:clamp(26px,3vw,39px); font-weight:800; margin-top:8px; }
+    .card .detail { color:var(--muted); font-size:12px; margin-top:5px; }
+    .grid { display:grid; grid-template-columns:1fr; gap:18px; margin-bottom:18px; }
+    .panel { background:var(--panel); border:1px solid var(--border); border-radius:17px; padding:17px; box-shadow:var(--shadow); min-width:0; }
+    .container > section.panel { margin-bottom:26px; }
+    .panel h2 { margin:0 0 15px; font-size:17px; }
+    .panel-title-row { display:flex; justify-content:space-between; align-items:center; gap:12px; margin-bottom:15px; }
+    .panel-title-row h2 { margin:0; }
+    .btn-exportar { width:auto; min-width:180px; background:#176b43; border-color:#2a9f69; padding:10px 14px; }
+    .btn-exportar:hover { border-color:#39d98a; }
+    .chart-wrap { height:350px; }
+    .chart-wrap-origen { height:420px; }
+    .panel-origen { margin-top:0; }
+    .warning { display:none; margin-bottom:16px; background:#392b16; border:1px solid #7a5720; color:#ffd68b; border-radius:12px; padding:12px 14px; }
+    .error { background:#421f27; border-color:#863344; color:#ffc0c8; }
+    .table-wrap { overflow:auto; max-height:520px; border-radius:11px; border:1px solid var(--border); }
+    table { width:100%; border-collapse:collapse; min-width:950px; }
+    th { position:sticky; top:0; z-index:2; background:#1a2941; color:#cbd7e7; font-size:12px; text-transform:uppercase; }
+    th, td { padding:11px 10px; border-bottom:1px solid var(--border); text-align:center; white-space:nowrap; }
+    td { font-size:13px; }
+    tbody tr:hover { background:rgba(255,255,255,.025); }
+    .empty { color:var(--muted); text-align:center; padding:30px; }
+    .field-note { color:var(--muted); font-size:12px; margin-top:10px; line-height:1.5; }
+    @media(max-width:1050px){ .filters{grid-template-columns:repeat(3,1fr)} .cards{grid-template-columns:repeat(2,1fr)} .grid{grid-template-columns:1fr} }
+    @media(max-width:650px){ .container{width:94%;padding-top:16px}.header{display:block}.status{text-align:left;margin-top:8px}.filters{grid-template-columns:1fr 1fr}.cards{grid-template-columns:1fr 1fr}.card{padding:14px}.card .value{font-size:25px}.chart-wrap{height:300px}.chart-wrap-origen{height:440px}.panel{padding:14px} }
+  </style>
+</head>
+<body>
+<div class="container">
+  <div class="header">
+    <div>
+      <h1>Dashboard Recibo Resúmenes</h1>
+      <div class="subtitle">Información histórica desde el 1.º de enero de 2025</div>
+    </div>
+    <div class="status" id="estado">Cargando datos…</div>
+  </div>
+
+  <div id="aviso" class="warning"></div>
+
+  <section class="filters">
+    <div><label for="fAnio">Año</label><select id="fAnio"></select></div>
+    <div><label for="fMes">Mes</label><select id="fMes"></select></div>
+    <div><label for="fDeposito">Depósito</label><select id="fDeposito"></select></div>
+    <div><label for="fContrato">Contrato</label><select id="fContrato"></select></div>
+    <div><label for="fMonte">Monte</label><select id="fMonte"></select></div>
+    <button id="btnLimpiar">Limpiar filtros</button>
+  </section>
+
+  <section class="cards">
+    <article class="card"><div class="name">Cantidad de remitos</div><div class="value" id="kRegistros">0</div><div class="detail">Remitos recibidos únicos según filtros</div></article>
+    <article class="card"><div class="name">MCS recibidos</div><div class="value" id="kMcsRecibidos">0</div><div class="detail">Suma de Metros Cubicos sin exportación</div></article>
+    <article class="card"><div class="name">MCS x viaje</div><div class="value" id="kMcsViaje">0</div><div class="detail">MCS recibidos ÷ cantidad de remitos recibidos</div></article>
+    <article class="card"><div class="name">Exportación</div><div class="value" id="kExportacion">0</div><div class="detail">MCS de baja_por_exportación</div></article>
+  </section>
+
+  <section class="panel">
+    <h2>MCS por mes y depósito</h2>
+    <div class="chart-wrap"><canvas id="graficoMes"></canvas></div>
+  </section>
+
+  <section class="panel panel-origen">
+    <h2>MCS por origen</h2>
+    <div class="chart-wrap chart-wrap-origen"><canvas id="graficoDeposito"></canvas></div>
+  </section>
+
+  <section class="panel">
+    <h2>MCS por mes y producto</h2>
+    <div class="chart-wrap"><canvas id="graficoProductoMes"></canvas></div>
+  </section>
+
+  <section class="panel">
+    <div class="panel-title-row">
+      <h2>Detalle de registros</h2>
+      <button id="btnExportar" class="btn-exportar" type="button">Exportar a Excel</button>
+    </div>
+    <div class="table-wrap">
+      <table>
+        <thead><tr id="encabezadoTabla"></tr></thead>
+        <tbody id="cuerpoTabla"></tbody>
+      </table>
+    </div>
+    <div class="field-note" id="notaCampos"></div>
+  </section>
+</div>
+
+<script>
+'use strict';
+
+const JSON_URL = 'https://dl.dropbox.com/scl/fi/kud6q42l7ayvrm3tkje4c/RECIBO-RESUMENES.json?rlkey=a9hv1g2x14t91al141ado7owh&dl=1';
+const FECHA_MINIMA = new Date(2025, 0, 1);
+const LIMITE_TABLA = 500;
+
+const MESES = ['Enero','Febrero','Marzo','Abril','Mayo','Junio','Julio','Agosto','Septiembre','Octubre','Noviembre','Diciembre'];
+const ALIAS = {
+  fecha: ['FechaRto'],
+  anio: ['Año'],
+  mes: ['Mes'],
+  deposito: ['Depósito'],
+  origen: ['Origen'],
+  contrato: ['CONTRATO'],
+  monte: ['Monte'],
+  matricula: ['Matricula'],
+  neto: ['Neto'],
+  remito: ['Remito'],
+  producto: ['NombreProd2'],
+  empresa: ['NombreEmpresa'],
+  fletero: ['Nombre Fletero'],
+  semana: ['Semana'],
+  barco: ['Barco'],
+  bdmt: ['bdmt'],
+  toneladas: ['toneladas'],
+  tipoRemito: ['Tipo Remito'],
+  rtoOrigen: ['RtoOrigen'],
+  metrosCubicos: ['Metros Cubicos']
+};
+
+let datosOriginales = [];
+let datosFiltrados = [];
+let campos = {};
+let graficoMes = null;
+let graficoDeposito = null;
+let graficoProductoMes = null;
+let textoActualizacion = '';
+let columnasFuente = [];
+let filasCorregidas = 0;
+let filasDescartadas = 0;
+
+const normalizar = v => String(v ?? '').normalize('NFD').replace(/[\u0300-\u036f]/g,'').trim().toLowerCase();
+
+function encontrarIndice(columnas, alias) {
+  const mapa = new Map(columnas.map((nombre, indice) => [normalizar(nombre), indice]));
+  for (const candidato of alias) {
+    const indice = mapa.get(normalizar(candidato));
+    if (indice !== undefined) return indice;
+  }
+  return null;
+}
+
+function extraerLista(json) {
+  if (Array.isArray(json)) return json;
+  if (!json || typeof json !== 'object') return [];
+  for (const key of ['datos','data','registros','records','items','value']) {
+    if (Array.isArray(json[key])) return json[key];
+  }
+  const lista = Object.values(json).find(Array.isArray);
+  return lista || [];
+}
+
+function normalizarFila(fila, cantidadColumnas, indiceAnio) {
+  if (!Array.isArray(fila)) {
+    filasDescartadas++;
+    return null;
+  }
+
+  // Caso normal: la fila tiene exactamente la misma cantidad de valores
+  // que el arreglo "columnas" del JSON.
+  if (fila.length === cantidadColumnas) return fila;
+
+  // Compatibilidad con versiones anteriores que incluían IdTrans al inicio,
+  // aunque el JSON actual comienza directamente por Año.
+  if (fila.length === cantidadColumnas + 1 && indiceAnio === 0) {
+    const posibleAnioActual = Number(fila[0]);
+    const posibleAnioDesplazado = Number(fila[1]);
+    const primeroPareceAnio = posibleAnioActual >= 1900 && posibleAnioActual <= 2100;
+    const segundoPareceAnio = posibleAnioDesplazado >= 1900 && posibleAnioDesplazado <= 2100;
+    if (!primeroPareceAnio && segundoPareceAnio) {
+      filasCorregidas++;
+      return fila.slice(1);
+    }
+  }
+
+  // Si faltan valores al final, completa con blancos sin desplazar columnas.
+  if (fila.length < cantidadColumnas) {
+    filasCorregidas++;
+    return fila.concat(Array(cantidadColumnas - fila.length).fill(''));
+  }
+
+  // Si sobran valores al final, conserva únicamente las columnas declaradas.
+  if (fila.length > cantidadColumnas) {
+    filasCorregidas++;
+    return fila.slice(0, cantidadColumnas);
+  }
+
+  filasDescartadas++;
+  return null;
+}
+
+function parseFecha(valor) {
+  if (valor === null || valor === undefined || valor === '') return null;
+  if (valor instanceof Date && !isNaN(valor)) return valor;
+
+  // Las fechas del JSON provienen de Excel, por ejemplo 39448 = 01/01/2008.
+  // Se convierten a una fecha LOCAL para evitar que la zona horaria reste un día.
+  if (typeof valor === 'number' && Number.isFinite(valor)) {
+    const dias = Math.floor(valor);
+    const fraccion = valor - dias;
+    const baseUTC = Date.UTC(1899, 11, 30);
+    const temporalUTC = new Date(baseUTC + dias * 86400000);
+
+    const totalSegundos = Math.round(fraccion * 86400);
+    const horas = Math.floor(totalSegundos / 3600);
+    const minutos = Math.floor((totalSegundos % 3600) / 60);
+    const segundos = totalSegundos % 60;
+
+    const d = new Date(
+      temporalUTC.getUTCFullYear(),
+      temporalUTC.getUTCMonth(),
+      temporalUTC.getUTCDate(),
+      horas,
+      minutos,
+      segundos
+    );
+    return isNaN(d) ? null : d;
+  }
+
+  const s = String(valor).trim();
+  let m = s.match(/^(\d{1,2})[\/\-](\d{1,2})[\/\-](\d{4})/);
+  if (m) {
+    const d = new Date(+m[3], +m[2]-1, +m[1]);
+    return isNaN(d) ? null : d;
+  }
+  m = s.match(/^(\d{4})[\/\-](\d{1,2})[\/\-](\d{1,2})/);
+  if (m) {
+    const d = new Date(+m[1], +m[2]-1, +m[3]);
+    return isNaN(d) ? null : d;
+  }
+  const d = new Date(s);
+  return isNaN(d) ? null : d;
+}
+
+function numero(valor) {
+  if (typeof valor === 'number') return Number.isFinite(valor) ? valor : 0;
+  if (valor == null || valor === '') return 0;
+  let s = String(valor).trim().replace(/\s/g,'');
+  if (s.includes(',') && s.includes('.')) s = s.lastIndexOf(',') > s.lastIndexOf('.') ? s.replace(/\./g,'').replace(',','.') : s.replace(/,/g,'');
+  else if (s.includes(',')) s = s.replace(',','.');
+  const n = Number(s);
+  return Number.isFinite(n) ? n : 0;
+}
+
+function valorCampo(r, nombre) { const c = campos[nombre]; return c !== null && c !== undefined ? r[c] : ''; }
+function fechaRegistro(r) { return r.__fecha; }
+function anioRegistro(r) { const f=fechaRegistro(r); return f ? f.getFullYear() : Number(valorCampo(r,'anio')) || null; }
+function mesRegistro(r) {
+  // El mes se toma EXCLUSIVAMENTE de la columna "Mes" del JSON.
+  // No se calcula a partir de FechaRto.
+  const v = valorCampo(r, 'mes');
+  const n = Number(v);
+  if (n >= 1 && n <= 12) return n;
+  const i = MESES.findIndex(m => normalizar(m) === normalizar(v));
+  return i >= 0 ? i + 1 : null;
+}
+function nombreMesRegistro(r) {
+  const n = mesRegistro(r);
+  return n ? MESES[n - 1] : texto(r, 'mes');
+}
+function texto(r,nombre){ const v=valorCampo(r,nombre); return String(v ?? '').trim(); }
+function esViajeValido(r){
+  const tipo = normalizar(texto(r,'tipoRemito'));
+  const mcs = numero(valorCampo(r,'metrosCubicos'));
+  return tipo === 'entrada' && mcs > 0;
+}
+function claveViaje(r){
+  const remito = texto(r,'remito');
+  return remito || `${anioRegistro(r)}|${mesRegistro(r)}|${texto(r,'matricula')}|${fechaRegistro(r)?.getTime() || ''}`;
+}
+
+function llenarSelect(id, valores, etiqueta='Todos') {
+  const s=document.getElementById(id); const anterior=s.value;
+  s.innerHTML=`<option value="">${etiqueta}</option>`;
+  valores.forEach(v=>{ const o=document.createElement('option'); o.value=v; o.textContent=v; s.appendChild(o); });
+  if ([...s.options].some(o=>o.value===anterior)) s.value=anterior;
+}
+
+const CONFIG_FILTROS = [
+  {id:'fAnio', campo:'anio', numerico:true},
+  {id:'fMes', campo:'mes', numerico:true, mes:true},
+  {id:'fDeposito', campo:'deposito'},
+  {id:'fContrato', campo:'contrato'},
+  {id:'fMonte', campo:'monte'}
+];
+
+function valorFiltroRegistro(r, campo) {
+  if (campo === 'anio') return anioRegistro(r);
+  if (campo === 'mes') return mesRegistro(r);
+  return texto(r, campo);
+}
+
+function seleccionFiltros() {
+  const seleccion = {};
+  CONFIG_FILTROS.forEach(cfg => {
+    const valor = document.getElementById(cfg.id).value;
+    seleccion[cfg.campo] = cfg.mes && valor ? Number(valor.slice(0,2)) : valor;
+  });
+  return seleccion;
+}
+
+function coincideConSeleccion(r, seleccion, campoIgnorado=null) {
+  return CONFIG_FILTROS.every(cfg => {
+    if (cfg.campo === campoIgnorado) return true;
+    const elegido = seleccion[cfg.campo];
+    if (elegido === '' || elegido === null || elegido === undefined) return true;
+    const actual = valorFiltroRegistro(r, cfg.campo);
+    return cfg.numerico ? Number(actual) === Number(elegido) : String(actual) === String(elegido);
+  });
+}
+
+function valoresDisponibles(campo, seleccion, numerico=false) {
+  const valores = datosOriginales
+    .filter(r => coincideConSeleccion(r, seleccion, campo))
+    .map(r => valorFiltroRegistro(r, campo))
+    .filter(v => v !== '' && v !== null && v !== undefined);
+
+  return [...new Set(valores)].sort((a,b) =>
+    numerico
+      ? Number(a) - Number(b)
+      : String(a).localeCompare(String(b), 'es', {numeric:true, sensitivity:'base'})
+  );
+}
+
+function actualizarOpcionesFiltros() {
+  let seleccion = seleccionFiltros();
+
+  CONFIG_FILTROS.forEach(cfg => {
+    const select = document.getElementById(cfg.id);
+    const anterior = select.value;
+    const disponibles = valoresDisponibles(cfg.campo, seleccion, cfg.numerico);
+    const opciones = cfg.mes
+      ? disponibles.map(n => `${String(n).padStart(2,'0')} - ${MESES[n-1]}`)
+      : disponibles;
+
+    llenarSelect(cfg.id, opciones);
+
+    // Si una selección dejó de existir por otro filtro, se limpia automáticamente.
+    if (anterior && ![...select.options].some(o => o.value === anterior)) {
+      select.value = '';
+      seleccion[cfg.campo] = '';
+    }
+  });
+}
+
+function inicializarFiltros() {
+  actualizarOpcionesFiltros();
+  CONFIG_FILTROS.forEach(({id}) => {
+    document.getElementById(id).addEventListener('change', aplicarFiltros);
+  });
+  document.getElementById('btnLimpiar').addEventListener('click', () => {
+    CONFIG_FILTROS.forEach(({id}) => document.getElementById(id).value = '');
+    aplicarFiltros();
+  });
+}
+
+function aplicarFiltros() {
+  actualizarOpcionesFiltros();
+  const seleccion = seleccionFiltros();
+  datosFiltrados = datosOriginales.filter(r => coincideConSeleccion(r, seleccion));
+  render();
+}
+
+const fmt0=new Intl.NumberFormat('es-UY',{maximumFractionDigits:0});
+const fmt2=new Intl.NumberFormat('es-UY',{minimumFractionDigits:2,maximumFractionDigits:2});
+function esBajaPorExportacion(r) {
+  const tipo = normalizar(texto(r,'tipoRemito')).replace(/[\s-]+/g,'_');
+  return tipo === 'baja_por_exportacion';
+}
+
+function obtenerRegistrosRecibidos(){
+  // Los MCS recibidos excluyen expresamente las bajas por exportación.
+  return datosFiltrados.filter(r => !esBajaPorExportacion(r));
+}
+
+function obtenerViajesValidos(){
+  // Para viajes recibidos se cuentan remitos únicos, excluyendo bajas por exportación.
+  return obtenerRegistrosRecibidos().filter(r => texto(r,'remito') !== '');
+}
+
+function renderKPIs(){
+  const recibidos = obtenerRegistrosRecibidos();
+  const exportaciones = datosFiltrados.filter(esBajaPorExportacion);
+
+  const remitosUnicos = new Set(
+    recibidos.filter(r => texto(r,'remito') !== '').map(r => texto(r,'remito'))
+  ).size;
+
+  const totalMcsRecibidos = recibidos.reduce(
+    (s,r) => s + numero(valorCampo(r,'metrosCubicos')),
+    0
+  );
+
+  const totalMcsExportacion = exportaciones.reduce(
+    (s,r) => s + numero(valorCampo(r,'metrosCubicos')),
+    0
+  );
+
+  const mcsPorViaje = remitosUnicos > 0 ? totalMcsRecibidos / remitosUnicos : 0;
+
+  document.getElementById('kRegistros').textContent = fmt0.format(remitosUnicos);
+  document.getElementById('kMcsRecibidos').textContent = fmt2.format(totalMcsRecibidos);
+  document.getElementById('kMcsViaje').textContent = fmt2.format(mcsPorViaje);
+  document.getElementById('kExportacion').textContent = fmt2.format(totalMcsExportacion);
+}
+
+function agruparMcs(claveFn, registros=datosFiltrados) {
+  const m=new Map();
+  registros.forEach(r=>{
+    const k=claveFn(r);
+    if(!k)return;
+    m.set(k,(m.get(k)||0)+numero(valorCampo(r,'metrosCubicos')));
+  });
+  return m;
+}
+
+const etiquetasColumnas = {
+  id: 'etiquetasColumnas',
+  afterDatasetsDraw(chart) {
+    const {ctx, chartArea} = chart;
+    ctx.save();
+    ctx.fillStyle = '#edf3fb';
+    ctx.font = '600 11px Segoe UI, Arial, sans-serif';
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'bottom';
+
+    chart.data.datasets.forEach((dataset, datasetIndex) => {
+      const meta = chart.getDatasetMeta(datasetIndex);
+      if (meta.hidden) return;
+
+      meta.data.forEach((barra, index) => {
+        const valor = Number(dataset.data[index]) || 0;
+        if (valor <= 0) return;
+
+        const textoValor = fmt2.format(valor);
+        const y = Math.max(barra.y - 5, chartArea.top + 11);
+        ctx.fillText(textoValor, barra.x, y);
+      });
+    });
+    ctx.restore();
+  }
+};
+
+const etiquetasColumnasApiladas = {
+  id: 'etiquetasColumnasApiladas',
+  afterDatasetsDraw(chart) {
+    const {ctx} = chart;
+    ctx.save();
+    ctx.fillStyle = '#ffffff';
+    ctx.font = '600 10px Segoe UI, Arial, sans-serif';
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+
+    chart.data.datasets.forEach((dataset, datasetIndex) => {
+      const meta = chart.getDatasetMeta(datasetIndex);
+      if (meta.hidden) return;
+
+      meta.data.forEach((barra, index) => {
+        const valor = Number(dataset.data[index]) || 0;
+        if (valor <= 0) return;
+
+        const alto = Math.abs((barra.base ?? barra.y) - barra.y);
+        if (alto < 16) return;
+
+        const centroY = barra.y + alto / 2;
+        ctx.fillText(fmt2.format(valor), barra.x, centroY);
+      });
+    });
+    ctx.restore();
+  }
+};
+
+const etiquetasFinBarra = {
+  id: 'etiquetasFinBarra',
+  afterDatasetsDraw(chart) {
+    const {ctx, chartArea} = chart;
+    ctx.save();
+    ctx.fillStyle = '#edf3fb';
+    ctx.font = '600 11px Segoe UI, Arial, sans-serif';
+    ctx.textAlign = 'left';
+    ctx.textBaseline = 'middle';
+
+    chart.data.datasets.forEach((dataset, datasetIndex) => {
+      const meta = chart.getDatasetMeta(datasetIndex);
+      if (meta.hidden) return;
+
+      meta.data.forEach((barra, index) => {
+        const valor = Number(dataset.data[index]) || 0;
+        const textoValor = `${fmt2.format(valor)} MCS`;
+        const x = Math.min(barra.x + 7, chartArea.right + 75);
+        ctx.fillText(textoValor, x, barra.y);
+      });
+    });
+    ctx.restore();
+  }
+};
+
+function renderGraficos(){
+  const viajes = obtenerViajesValidos();
+  const clavesMes = [...new Set(viajes.map(r=>{
+    const a=anioRegistro(r), m=mesRegistro(r);
+    return a&&m ? `${a}|${String(m).padStart(2,'0')}` : '';
+  }).filter(Boolean))].sort();
+
+  const depositos = [...new Set(viajes.map(r=>texto(r,'deposito')).filter(Boolean))]
+    .sort((a,b)=>a.localeCompare(b,'es',{numeric:true,sensitivity:'base'}));
+
+  const labelsMes=clavesMes.map(k=>{
+    const [a,m]=k.split('|');
+    return `${MESES[Number(m)-1]} ${a}`;
+  });
+
+  const datasetsMes = depositos.map(deposito => ({
+    label: deposito,
+    data: clavesMes.map(clave => {
+      const [anio, mes] = clave.split('|');
+      return viajes.reduce((s,r) => {
+        return anioRegistro(r)===Number(anio) && mesRegistro(r)===Number(mes) && texto(r,'deposito')===deposito
+          ? s + numero(valorCampo(r,'metrosCubicos'))
+          : s;
+      },0);
+    }),
+    borderWidth: 1,
+    borderRadius: 4
+  }));
+
+  const base={
+    responsive:true,
+    maintainAspectRatio:false,
+    interaction:{mode:'index',intersect:false},
+    plugins:{
+      legend:{display:true,position:'bottom',labels:{color:'#aebbd0',boxWidth:12}},
+      tooltip:{callbacks:{label:(ctx)=>`${ctx.dataset.label}: ${fmt2.format(ctx.parsed.y)} MCS`}}
+    },
+    scales:{
+      x:{stacked:false,ticks:{color:'#aebbd0'},grid:{color:'rgba(255,255,255,.05)'}},
+      y:{stacked:false,beginAtZero:true,ticks:{color:'#aebbd0'},grid:{color:'rgba(255,255,255,.07)'},title:{display:true,text:'MCS',color:'#aebbd0'}}
+    }
+  };
+
+  if(graficoMes)graficoMes.destroy();
+  graficoMes=new Chart(document.getElementById('graficoMes'),{
+    type:'bar',
+    data:{labels:labelsMes,datasets:datasetsMes},
+    plugins:[etiquetasColumnas],
+    options:{
+      ...base,
+      layout:{padding:{top:22}},
+      plugins:{
+        ...base.plugins,
+        legend:{display:true,position:'bottom',labels:{color:'#aebbd0',boxWidth:12}},
+        tooltip:{callbacks:{label:(ctx)=>`${ctx.dataset.label}: ${fmt2.format(ctx.parsed.y)} MCS`}}
+      }
+    }
+  });
+
+  const dep=[...agruparMcs(r=>texto(r,'origen'),viajes).entries()].sort((a,b)=>b[1]-a[1]);
+  if(graficoDeposito)graficoDeposito.destroy();
+  graficoDeposito=new Chart(document.getElementById('graficoDeposito'),{
+    type:'bar',
+    data:{labels:dep.map(x=>x[0]),datasets:[{label:'MCS',data:dep.map(x=>x[1]),borderWidth:1,borderRadius:6}]},
+    plugins:[etiquetasFinBarra],
+    options:{
+      ...base,
+      indexAxis:'y',
+      layout:{padding:{left:16,right:125}},
+      plugins:{...base.plugins,legend:{display:false},tooltip:{callbacks:{label:(ctx)=>`${fmt2.format(ctx.parsed.x)} MCS`}}},
+      scales:{
+        x:{beginAtZero:true,ticks:{color:'#aebbd0'},grid:{color:'rgba(255,255,255,.07)'},title:{display:true,text:'MCS',color:'#aebbd0'}},
+        y:{
+          afterFit:(scale)=>{
+            scale.width = window.innerWidth <= 650 ? 205 : 300;
+          },
+          ticks:{
+            color:'#aebbd0',
+            padding:12,
+            align:'start',
+            crossAlign:'far',
+            callback:function(value){
+              const etiqueta = String(this.getLabelForValue(value) ?? '');
+              if (window.innerWidth > 650 || etiqueta.length <= 24) return etiqueta;
+
+              const palabras = etiqueta.split(/\s+/);
+              const lineas = [];
+              let linea = '';
+
+              palabras.forEach(palabra => {
+                const candidata = linea ? `${linea} ${palabra}` : palabra;
+                if (candidata.length > 22 && linea) {
+                  lineas.push(linea);
+                  linea = palabra;
+                } else {
+                  linea = candidata;
+                }
+              });
+
+              if (linea) lineas.push(linea);
+              return lineas;
+            }
+          },
+          grid:{color:'rgba(255,255,255,.05)'}
+        }
+      }
+    }
+  });
+
+  const productos = [...new Set(viajes.map(r=>texto(r,'producto')).filter(Boolean))]
+    .sort((a,b)=>a.localeCompare(b,'es',{numeric:true,sensitivity:'base'}));
+
+  const datasetsProductoMes = productos.map(producto => ({
+    label: producto,
+    data: clavesMes.map(clave => {
+      const [anio, mes] = clave.split('|');
+      return viajes.reduce((s,r) => {
+        return anioRegistro(r)===Number(anio) && mesRegistro(r)===Number(mes) && texto(r,'producto')===producto
+          ? s + numero(valorCampo(r,'metrosCubicos'))
+          : s;
+      },0);
+    }),
+    borderWidth: 1,
+    borderRadius: 4,
+    categoryPercentage: 0.72,
+    barPercentage: 0.78,
+    maxBarThickness: 110
+  }));
+
+  if(graficoProductoMes) graficoProductoMes.destroy();
+  graficoProductoMes = new Chart(document.getElementById('graficoProductoMes'), {
+    type:'bar',
+    data:{labels:labelsMes,datasets:datasetsProductoMes},
+    plugins:[etiquetasColumnasApiladas],
+    options:{
+      ...base,
+      layout:{padding:{top:14}},
+      plugins:{
+        ...base.plugins,
+        legend:{display:true,position:'bottom',labels:{color:'#aebbd0',boxWidth:12}},
+        tooltip:{callbacks:{label:(ctx)=>`${ctx.dataset.label}: ${fmt2.format(ctx.parsed.y)} MCS`}}
+      },
+      scales:{
+        x:{stacked:false,ticks:{color:'#aebbd0'},grid:{color:'rgba(255,255,255,.05)'},offset:true},
+        y:{stacked:false,beginAtZero:true,ticks:{color:'#aebbd0'},grid:{color:'rgba(255,255,255,.07)'},title:{display:true,text:'MCS',color:'#aebbd0'}}
+      }
+    }
+  });
+}
+
+function formatearFecha(fecha){ return fecha && !isNaN(fecha) ? fecha.toLocaleDateString('es-UY') : ''; }
+function mostrar(v){ if(v==null)return ''; if(typeof v==='number')return Number.isInteger(v)?fmt0.format(v):fmt2.format(v); return String(v); }
+function compararRemitos(a,b){
+  const ra = texto(a,'remito');
+  const rb = texto(b,'remito');
+  const na = Number(String(ra).replace(/[^0-9.-]/g,''));
+  const nb = Number(String(rb).replace(/[^0-9.-]/g,''));
+  const aNumerico = ra !== '' && Number.isFinite(na);
+  const bNumerico = rb !== '' && Number.isFinite(nb);
+  if (aNumerico && bNumerico && na !== nb) return na - nb;
+  if (aNumerico !== bNumerico) return aNumerico ? -1 : 1;
+  return ra.localeCompare(rb, 'es', {numeric:true, sensitivity:'base'});
+}
+function filasDetalleOrdenadas(){
+  return [...datosFiltrados].sort(compararRemitos);
+}
+function exportarExcel(){
+  if (typeof XLSX === 'undefined') {
+    alert('No se pudo cargar el componente de exportación a Excel.');
+    return;
+  }
+  const filas = filasDetalleOrdenadas();
+  if (!filas.length) {
+    alert('No hay registros para exportar con los filtros seleccionados.');
+    return;
+  }
+  const encabezados = ['Año','Mes','FechaRto','Depósito','Remito','Tipo Remito','Monte','NombreProd2','RtoOrigen','Matricula','Neto','Metros Cubicos','CONTRATO'];
+  const datos = filas.map(r => ({
+    'Año': valorCampo(r,'anio'),
+    'Mes': nombreMesRegistro(r),
+    'FechaRto': formatearFecha(fechaRegistro(r)),
+    'Depósito': valorCampo(r,'deposito'),
+    'Remito': valorCampo(r,'remito')==null ? '' : String(valorCampo(r,'remito')),
+    'Tipo Remito': valorCampo(r,'tipoRemito'),
+    'Monte': valorCampo(r,'monte'),
+    'NombreProd2': valorCampo(r,'producto'),
+    'RtoOrigen': valorCampo(r,'rtoOrigen')==null ? '' : String(valorCampo(r,'rtoOrigen')),
+    'Matricula': valorCampo(r,'matricula'),
+    'Neto': numero(valorCampo(r,'neto')),
+    'Metros Cubicos': numero(valorCampo(r,'metrosCubicos')),
+    'CONTRATO': valorCampo(r,'contrato')
+  }));
+  const hoja = XLSX.utils.json_to_sheet(datos, {header: encabezados});
+  hoja['!autofilter'] = {ref: `A1:M${datos.length + 1}`};
+  hoja['!cols'] = [
+    {wch:8},{wch:12},{wch:13},{wch:18},{wch:13},{wch:20},{wch:28},
+    {wch:22},{wch:13},{wch:14},{wch:12},{wch:16},{wch:18}
+  ];
+  const libro = XLSX.utils.book_new();
+  XLSX.utils.book_append_sheet(libro, hoja, 'Detalle');
+  const seleccion = seleccionFiltros();
+  const partes = ['recibo_resumenes', seleccion.anio || 'todos', seleccion.mes ? MESES[Number(seleccion.mes)-1] : 'todos'];
+  XLSX.writeFile(libro, `${partes.join('_')}.xlsx`);
+}
+function renderTabla(){
+  const columnas=[
+    ['anio','Año'],
+    ['mes','Mes'],
+    ['fecha','FechaRto'],
+    ['deposito','Depósito'],
+    ['remito','Remito'],
+    ['tipoRemito','Tipo Remito'],
+    ['monte','Monte'],
+    ['producto','NombreProd2'],
+    ['rtoOrigen','RtoOrigen'],
+    ['matricula','Matricula'],
+    ['neto','Neto'],
+    ['metrosCubicos','Metros Cubicos'],
+    ['contrato','CONTRATO']
+  ].filter(([k])=>campos[k] !== null && campos[k] !== undefined);
+  document.getElementById('encabezadoTabla').innerHTML=columnas.map(([,t])=>`<th>${t}</th>`).join('');
+  const filas=filasDetalleOrdenadas().slice(0,LIMITE_TABLA);
+  document.getElementById('cuerpoTabla').innerHTML=filas.length?filas.map(r=>`<tr>${columnas.map(([k])=>{
+    let valor;
+    if(k==='fecha') valor=formatearFecha(fechaRegistro(r));
+    else if(k==='mes') valor=nombreMesRegistro(r);
+    else if(k==='remito' || k==='rtoOrigen') valor=valorCampo(r,k)==null ? '' : String(valorCampo(r,k));
+    else valor=mostrar(valorCampo(r,k));
+    return `<td>${valor}</td>`;
+  }).join('')}</tr>`).join(''):`<tr><td class="empty" colspan="${Math.max(columnas.length,1)}">No hay registros para los filtros seleccionados.</td></tr>`;
+  document.getElementById('notaCampos').textContent=`Se muestran hasta ${LIMITE_TABLA.toLocaleString('es-UY')} registros, ordenados por Remito de menor a mayor. La exportación incluye todos los registros filtrados. Esquema verificado: ${columnasFuente.length} columnas. Filas ajustadas: ${fmt0.format(filasCorregidas)}. Filas descartadas: ${fmt0.format(filasDescartadas)}.`;
+}
+function render(){ renderKPIs(); renderGraficos(); renderTabla(); const validos = obtenerViajesValidos().length; document.getElementById('estado').textContent=`${fmt0.format(validos)} entradas válidas · ${fmt0.format(datosFiltrados.length)} filas filtradas · ${fmt0.format(datosOriginales.length)} filas desde 2025 · ${columnasFuente.length} columnas verificadas${textoActualizacion}`; }
+
+async function cargar(){
+  try{
+    const res = await fetch(JSON_URL, {cache:'no-store'});
+    if(!res.ok) throw new Error(`HTTP ${res.status}`);
+
+    const json = await res.json();
+    const columnasJSON = Array.isArray(json.columnas) ? json.columnas : [];
+    const lista = Array.isArray(json.datos) ? json.datos : extraerLista(json);
+
+    if(!columnasJSON.length) throw new Error('El JSON no contiene el arreglo "columnas".');
+    if(!Array.isArray(lista) || !lista.length) throw new Error('El JSON no contiene registros dentro de "datos".');
+
+    columnasFuente = columnasJSON.slice();
+    filasCorregidas = 0;
+    filasDescartadas = 0;
+
+    for(const [clave, alias] of Object.entries(ALIAS)) {
+      campos[clave] = encontrarIndice(columnasJSON, alias);
+    }
+
+    const indiceAnio = campos.anio;
+    const cantidadColumnas = columnasJSON.length;
+
+    // Cada fila se valida contra las 46 columnas declaradas por el JSON.
+    // No se agrega IdTrans porque ese campo no está en columnas[].
+    datosOriginales = lista
+      .map(fila => normalizarFila(fila, cantidadColumnas, indiceAnio))
+      .filter(Boolean)
+      .filter(fila => {
+        const anio = Number(valorCampo(fila, 'anio'));
+        return Number.isFinite(anio) && anio >= 2025;
+      });
+
+    // Calcular la fecha una única vez por fila.
+    datosOriginales.forEach(fila => {
+      fila.__fecha = parseFecha(valorCampo(fila, 'fecha'));
+    });
+
+    const faltantes = ['anio','mes','deposito','contrato','monte','neto','matricula','tipoRemito']
+      .filter(clave => campos[clave] === null || campos[clave] === undefined);
+
+    const aviso = document.getElementById('aviso');
+    if(faltantes.length){
+      aviso.style.display='block';
+      aviso.textContent=`No se detectaron estas columnas: ${faltantes.join(', ')}.`;
+    }
+
+    inicializarFiltros();
+    aplicarFiltros();
+
+    textoActualizacion = json.actualizado ? ` · Actualizado: ${json.actualizado}` : '';
+    render();
+  }catch(err){
+    const a=document.getElementById('aviso');
+    a.classList.add('error');
+    a.style.display='block';
+    a.innerHTML=`No fue posible cargar el JSON desde Dropbox.<br><strong>${err.message}</strong><br>Verificá que el enlace sea público y que Dropbox permita CORS. En Cloudflare, lo más estable es consumirlo mediante <code>/api/datos</code>.`;
+    document.getElementById('estado').textContent='Error de carga';
+  }
+}
+
+cargar();
+</script>
+</body>
+</html>
