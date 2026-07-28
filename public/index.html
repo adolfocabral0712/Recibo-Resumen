@@ -1,920 +1,2291 @@
-<!DOCTYPE html>
-<html lang="es">
-<head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Dashboard Recibo Resúmenes</title>
-  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-  <style>
-    :root {
-      --bg: #0b1220;
-      --panel: #111b2e;
-      --panel2: #17243a;
-      --border: #263650;
-      --text: #edf3fb;
-      --muted: #9eacc2;
-      --accent: #48b0f7;
-      --good: #39d98a;
-      --danger: #ff6b6b;
-      --shadow: 0 12px 28px rgba(0,0,0,.25);
-    }
-    * { box-sizing: border-box; }
-    body {
-      margin: 0;
-      background: linear-gradient(145deg, #09101d 0%, #101a2c 100%);
-      color: var(--text);
-      font-family: Inter, Segoe UI, Arial, sans-serif;
-      min-height: 100vh;
-    }
-    .container { width: min(1500px, 96%); margin: 0 auto; padding: 24px 0 40px; }
-    .header { display:flex; justify-content:space-between; gap:20px; align-items:flex-end; margin-bottom:20px; }
-    h1 { margin:0; font-size:clamp(24px,3vw,40px); letter-spacing:-.8px; }
-    .subtitle { color:var(--muted); margin-top:7px; }
-    .status { color:var(--muted); font-size:13px; text-align:right; }
-    .filters {
-      display:grid;
-      grid-template-columns: repeat(5, minmax(150px, 1fr)) auto;
-      gap:12px;
-      background:var(--panel);
-      border:1px solid var(--border);
-      border-radius:18px;
-      padding:16px;
-      box-shadow:var(--shadow);
-      margin-bottom:18px;
-    }
-    label { display:block; color:var(--muted); font-size:12px; font-weight:700; margin:0 0 7px 2px; text-transform:uppercase; letter-spacing:.5px; }
-    select, button {
-      width:100%; border:1px solid var(--border); background:var(--panel2); color:var(--text);
-      border-radius:11px; padding:11px 12px; font-size:14px; outline:none;
-    }
-    select:focus { border-color:var(--accent); }
-    button { cursor:pointer; font-weight:700; align-self:end; transition:.2s; }
-    button:hover { transform:translateY(-1px); border-color:var(--accent); }
-    .cards { display:grid; grid-template-columns:repeat(4, 1fr); gap:14px; margin-bottom:18px; }
-    .card { background:var(--panel); border:1px solid var(--border); border-radius:17px; padding:18px; box-shadow:var(--shadow); text-align:center; }
-    .card .name { color:var(--muted); font-size:12px; font-weight:700; text-transform:uppercase; letter-spacing:.6px; }
-    .card .value { font-size:clamp(26px,3vw,39px); font-weight:800; margin-top:8px; }
-    .card .detail { color:var(--muted); font-size:12px; margin-top:5px; }
-    .grid { display:grid; grid-template-columns:1fr; gap:18px; margin-bottom:18px; }
-    .panel { background:var(--panel); border:1px solid var(--border); border-radius:17px; padding:17px; box-shadow:var(--shadow); min-width:0; }
-    .container > section.panel { margin-bottom:26px; }
-    .panel h2 { margin:0 0 15px; font-size:17px; }
-    .panel-title-row { display:flex; justify-content:space-between; align-items:center; gap:12px; margin-bottom:15px; }
-    .panel-title-row h2 { margin:0; }
-    .btn-exportar { width:auto; min-width:180px; background:#176b43; border-color:#2a9f69; padding:10px 14px; }
-    .btn-exportar:hover { border-color:#39d98a; }
-    .chart-wrap { height:350px; }
-    .chart-wrap-origen { height:500px; overflow-x:auto; overflow-y:hidden; padding-bottom:8px; }
-    .panel-origen { margin-top:0; }
-    .warning { display:none; margin-bottom:16px; background:#392b16; border:1px solid #7a5720; color:#ffd68b; border-radius:12px; padding:12px 14px; }
-    .error { background:#421f27; border-color:#863344; color:#ffc0c8; }
-    .table-wrap { overflow:auto; max-height:520px; border-radius:11px; border:1px solid var(--border); }
-    table { width:100%; border-collapse:collapse; min-width:950px; }
-    th { position:sticky; top:0; z-index:2; background:#1a2941; color:#cbd7e7; font-size:12px; text-transform:uppercase; }
-    th, td { padding:11px 10px; border-bottom:1px solid var(--border); text-align:center; white-space:nowrap; }
-    td { font-size:13px; }
-    tbody tr:hover { background:rgba(255,255,255,.025); }
-    .empty { color:var(--muted); text-align:center; padding:30px; }
-    .field-note { color:var(--muted); font-size:12px; margin-top:10px; line-height:1.5; }
-    @media(max-width:1050px){ .filters{grid-template-columns:repeat(3,1fr)} .cards{grid-template-columns:repeat(2,1fr)} .grid{grid-template-columns:1fr} }
-    @media(max-width:650px){ .container{width:94%;padding-top:16px}.header{display:block}.status{text-align:left;margin-top:8px}.filters{grid-template-columns:1fr 1fr}.cards{grid-template-columns:1fr 1fr}.card{padding:14px}.card .value{font-size:25px}.chart-wrap{height:300px}.chart-wrap-origen{height:500px}.panel{padding:14px} }
-  </style>
+<html lang="es"><head>
+<meta charset="utf-8">
+<meta content="width=device-width, initial-scale=1" name="viewport">
+<title>Dashboard RESUMEN</title>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.7/dist/chart.umd.min.js"></script>
+<style>
+:root{
+  --bg:#0b1220;
+  --panel:#111a2e;
+  --panel2:#16223a;
+  --line:#24324f;
+  --text:#eef4ff;
+  --muted:#97a6c2;
+  --blue:#4ea1ff;
+  --green:#2fd27a;
+  --amber:#f8c14a;
+  --red:#ff5e6c;
+  --purple:#9d7cff;
+  --cyan:#36d1dc;
+}
+
+*{box-sizing:border-box}
+
+body{
+  margin:0;
+  background:
+    radial-gradient(circle at top left,#1a2744 0,#0b1220 36%,#060a12 100%);
+  font-family:Inter,Segoe UI,Arial,sans-serif;
+  color:var(--text);
+}
+
+header{
+  padding:26px 28px 14px;
+  display:flex;
+  gap:18px;
+  align-items:center;
+  justify-content:center;
+  flex-wrap:wrap;
+  text-align:center;
+}
+
+.title{
+  width:100%;
+  text-align:center;
+}
+
+.title h1{
+  margin:0;
+  font-size:28px;
+  font-weight:850;
+  letter-spacing:.3px;
+}
+
+.title p{
+  margin:7px 0 0;
+  color:var(--muted);
+  font-size:13px;
+}
+
+.upload{
+  background:linear-gradient(180deg,#121d33,#0f1728);
+  border:1px solid var(--line);
+  border-radius:14px;
+  padding:12px 15px;
+  box-shadow:0 8px 24px rgba(0,0,0,.22);
+}
+
+input{color:var(--muted)}
+
+main{width:100%;max-width:1920px;margin:0 auto;padding:12px 28px 32px}
+
+.grid{
+  display:grid;
+  grid-template-columns:repeat(12,1fr);
+  gap:16px;
+}
+
+.card{
+  background:linear-gradient(180deg,rgba(255,255,255,.055),rgba(255,255,255,.018));
+  border:1px solid var(--line);
+  border-radius:18px;
+  padding:16px;
+  box-shadow:0 16px 38px rgba(0,0,0,.26);
+  overflow:hidden;
+}
+
+.span3{grid-column:span 3}
+.span4{grid-column:span 4}
+.span5{grid-column:span 5}
+.span6{grid-column:span 6}
+.span7{grid-column:span 7}
+.span8{grid-column:span 8}
+.span12{grid-column:span 12}
+
+h2{
+  font-size:15px;
+  margin:0 0 12px;
+  color:#dce8ff;
+  letter-spacing:.2px;
+  text-align:center;
+}
+
+.kpis{
+  display:grid;
+  grid-template-columns:repeat(3,1fr);
+  gap:14px;
+  margin-bottom:16px;
+}
+
+.kpi{
+  background:linear-gradient(180deg,rgba(78,161,255,.08),rgba(255,255,255,.018)),var(--panel);
+  border:1px solid var(--line);
+  border-radius:16px;
+  padding:15px 14px;
+  display:flex;
+  flex-direction:column;
+  justify-content:center;
+  align-items:center;
+  text-align:center;
+  min-height:112px;
+  box-shadow:inset 0 1px 0 rgba(255,255,255,.05);
+}
+
+.kpi .label{
+  font-size:12px;
+  color:var(--muted);
+  margin-bottom:8px;
+  text-align:center;
+  text-transform:uppercase;
+  letter-spacing:.06em;
+}
+
+.kpi .value{
+  font-size:25px;
+  font-weight:850;
+  text-align:center;
+  line-height:1.1;
+}
+
+.kpi .sub{
+  font-size:12px;
+  color:var(--muted);
+  margin-top:7px;
+  text-align:center;
+  line-height:1.38;
+}
+
+table{
+  width:100%;
+  border-collapse:collapse;
+  font-size:12px;
+}
+
+th,td{
+  padding:8px 9px;
+  border-bottom:1px solid rgba(151,166,194,.16);
+  text-align:center;
+  vertical-align:middle;
+  white-space:nowrap;
+}
+
+th:first-child,td:first-child{text-align:center}
+
+th{
+  color:#c8d6ee;
+  font-weight:750;
+  background:rgba(255,255,255,.055);
+}
+
+tr:hover td{background:rgba(78,161,255,.06)}
+
+tr.total-row td{
+  background:rgba(78,161,255,.10);
+  font-weight:850;
+  border-top:1px solid rgba(78,161,255,.35);
+  border-bottom:1px solid rgba(78,161,255,.35);
+}
+
+tr.plain-total-row td{
+  background:transparent !important;
+  font-weight:850;
+  border-top:1px solid rgba(151,166,194,.16);
+  border-bottom:1px solid rgba(151,166,194,.16);
+}
+
+/* Fila de subtítulo dentro de tablas, por ejemplo: SALDO EN TRONCOS */
+tr.subsection-row td{
+  background:rgba(255,255,255,.055) !important;
+  color:#c8d6ee;
+  font-weight:750;
+  text-transform:uppercase;
+  letter-spacing:.04em;
+  border-top:1px solid rgba(151,166,194,.22);
+  border-bottom:1px solid rgba(151,166,194,.22);
+  box-shadow:none;
+}
+
+.pill{
+  display:inline-flex;
+  align-items:center;
+  gap:6px;
+  padding:4px 9px;
+  border-radius:999px;
+  background:rgba(78,161,255,.12);
+  color:#b9dcff;
+  font-size:12px;
+}
+
+.ok{color:var(--green)}
+.bad{color:var(--red)}
+.warn{color:var(--amber)}
+.muted{color:var(--muted)}
+
+.bar{
+  height:9px;
+  background:#1d2a45;
+  border-radius:999px;
+  overflow:hidden;
+}
+
+.bar>i{
+  display:block;
+  height:100%;
+  background:linear-gradient(90deg,var(--blue),var(--cyan));
+  border-radius:999px;
+}
+
+.progress-cell{
+  min-width:140px;
+}
+
+.progress-text{
+  margin-top:4px;
+  font-size:11px;
+  font-weight:750;
+  color:#c8d6ee;
+}
+
+.progress-bar{
+  height:10px;
+  background:#1d2a45;
+  border-radius:999px;
+  overflow:hidden;
+  box-shadow:inset 0 1px 2px rgba(0,0,0,.35);
+}
+
+.progress-bar i{
+  display:block;
+  height:100%;
+  background:linear-gradient(90deg,var(--green),var(--cyan));
+  border-radius:999px;
+}
+
+.section-title{
+  margin:18px 0 10px;
+  padding:10px 14px;
+  border-radius:10px 10px 0 0;
+  background:linear-gradient(180deg,#46556f 0%,#344258 100%);
+  color:#ffffff;
+  font-size:12px;
+  font-weight:850;
+  text-transform:uppercase;
+  letter-spacing:.12em;
+  text-align:center;
+  border-top:1px solid rgba(255,255,255,.14);
+  border-bottom:2px solid rgba(0,0,0,.35);
+  box-shadow:inset 0 1px 0 rgba(255,255,255,.16),0 4px 12px rgba(0,0,0,.28);
+}
+
+/* Visual web amplio + tablas autoajustadas sin partir valores */
+html,
+body{
+  width:100%;
+  max-width:100%;
+  overflow-x:hidden;
+}
+
+main{
+  width:100%;
+  max-width:1900px;
+  margin:0 auto;
+}
+
+.card{
+  overflow:hidden;
+}
+
+.table-scroll{
+  width:100%;
+  overflow-x:auto;
+  overflow-y:hidden;
+  -webkit-overflow-scrolling:touch;
+  border-radius:12px;
+}
+
+.table-scroll table{
+  width:max-content;
+  min-width:100%;
+  table-layout:auto;
+}
+
+th,
+td{
+  white-space:nowrap;
+  word-break:normal;
+  overflow:visible;
+}
+
+/* Navegación tipo Power BI */
+.dashboard-tabs{
+  position:sticky;
+  top:0;
+  z-index:20;
+  display:flex;
+  justify-content:center;
+  gap:12px;
+  flex-wrap:wrap;
+  margin:0 0 20px;
+  padding:10px;
+  background:rgba(6,10,18,.82);
+  backdrop-filter:blur(10px);
+  border:1px solid rgba(36,50,79,.65);
+  border-radius:18px;
+  box-shadow:0 12px 30px rgba(0,0,0,.25);
+}
+
+.tab-btn{
+  border:1px solid var(--line);
+  border-radius:999px;
+  padding:12px 20px;
+  cursor:pointer;
+  color:#c8d6ee;
+  background:linear-gradient(180deg,#121d33,#0f1728);
+  font-weight:850;
+  font-size:13px;
+  letter-spacing:.02em;
+  box-shadow:0 6px 18px rgba(0,0,0,.18);
+  transition:.18s ease;
+}
+
+.tab-btn:hover{
+  transform:translateY(-1px);
+  filter:brightness(1.08);
+}
+
+.tab-btn.active{
+  color:#fff;
+  background:linear-gradient(180deg,#4ea1ff,#2d7be0);
+  border-color:rgba(78,161,255,.75);
+  box-shadow:0 10px 26px rgba(78,161,255,.22);
+}
+
+.dashboard-page{
+  display:none;
+}
+
+.dashboard-page.active{
+  display:block !important;
+}
+
+/* Navegación por vistas: sólo se muestra una página a la vez */
+.dashboard-page:not(.active){
+  display:none !important;
+}
+
+.dashboard-page .grid{
+  align-items:start;
+}
+
+.dashboard-page .card{
+  min-height:0;
+}
+
+/* Equilibrio visual del resumen */
+.dashboard-page.active .kpis{
+  display:grid;
+  grid-template-columns:repeat(3,minmax(0,1fr));
+  gap:16px;
+  width:100%;
+  align-items:stretch;
+}
+
+.dashboard-page.active .kpis .kpi{
+  width:100%;
+  min-width:0;
+}
+
+/* En pantallas medianas los KPI se mantienen parejos en dos columnas; en móvil pasan a una. */
+@media(max-width:1180px){
+  .dashboard-page.active .kpis{
+    grid-template-columns:repeat(2,minmax(0,1fr));
+  }
+
+  .dashboard-page.active .kpis .kpi:last-child{
+    grid-column:1 / -1;
+  }
+}
+
+@media(max-width:700px){
+  .dashboard-page.active .kpis{
+    grid-template-columns:1fr;
+  }
+
+  .dashboard-page.active .kpis .kpi:last-child{
+    grid-column:auto;
+  }
+}
+
+/* Resumen ejecutivo: más espacio para Saldos por monte y tabla compacta de producción */
+.summary-montes{grid-column:span 5;}
+.summary-produccion{grid-column:span 3;}
+.summary-stocks{grid-column:span 4;}
+
+.summary-montes .table-scroll{
+  overflow-x:auto;
+}
+
+.summary-montes table{
+  width:100%;
+  min-width:760px;
+  table-layout:fixed;
+}
+
+.summary-montes th,
+.summary-montes td{
+  padding-left:8px;
+  padding-right:8px;
+}
+
+.summary-montes th:nth-child(1),
+.summary-montes td:nth-child(1){width:31%;}
+.summary-montes th:nth-child(2),
+.summary-montes td:nth-child(2){width:14%;}
+.summary-montes th:nth-child(3),
+.summary-montes td:nth-child(3){width:14%;}
+.summary-montes th:nth-child(4),
+.summary-montes td:nth-child(4){width:16%;}
+.summary-montes th:nth-child(5),
+.summary-montes td:nth-child(5){width:25%;}
+
+/* Mantiene visible la barra y el porcentaje de avance. */
+.summary-montes .progress-cell{
+  min-width:150px;
+  white-space:normal;
+}
+
+.summary-montes .progress-bar{
+  width:100%;
+  min-width:118px;
+  margin:0 auto;
+}
+
+.summary-montes .progress-text{
+  white-space:nowrap;
+}
+
+.summary-produccion .table-scroll{
+  overflow-x:hidden;
+}
+
+.summary-produccion table{
+  width:100%;
+  min-width:0;
+  table-layout:fixed;
+}
+
+.summary-produccion th:nth-child(1),
+.summary-produccion td:nth-child(1){width:34%;}
+.summary-produccion th:nth-child(2),
+.summary-produccion td:nth-child(2){width:33%;}
+.summary-produccion th:nth-child(3),
+.summary-produccion td:nth-child(3){width:33%;}
+
+@media(max-width:1100px){
+  .summary-montes,.summary-produccion,.summary-stocks{grid-column:span 12;}
+  .summary-montes .table-scroll,
+  .summary-produccion .table-scroll{overflow-x:auto;}
+  .summary-montes table,
+  .summary-produccion table{table-layout:auto; min-width:max-content;}
+}
+
+.page-title{
+  font-size:18px;
+  text-align:center;
+  margin:2px 0 16px;
+  color:#eef4ff;
+  font-weight:850;
+  letter-spacing:.3px;
+}
+
+.page-note{
+  text-align:center;
+  color:var(--muted);
+  font-size:12px;
+  margin-top:-8px;
+  margin-bottom:16px;
+}
+
+.card::-webkit-scrollbar,
+.table-scroll::-webkit-scrollbar{
+  height:8px;
+}
+
+.card::-webkit-scrollbar-track,
+.table-scroll::-webkit-scrollbar-track{
+  background:#111a2e;
+  border-radius:999px;
+}
+
+.card::-webkit-scrollbar-thumb,
+.table-scroll::-webkit-scrollbar-thumb{
+  background:#4ea1ff;
+  border-radius:999px;
+}
+
+@media(max-width:650px){
+  body{
+    overflow-x:hidden;
+  }
+
+  header{
+    gap:12px;
+  }
+
+  .title h1{
+    font-size:22px;
+  }
+
+  .title p{
+    font-size:12px;
+  }
+
+  main{
+    padding:10px 10px 24px;
+  }
+
+  .grid{
+    gap:12px;
+  }
+
+  .card{
+    padding:12px;
+    border-radius:14px;
+  }
+
+  .kpi{
+    min-height:96px;
+    padding:12px;
+  }
+
+  .kpi .value{
+    font-size:22px;
+  }
+
+  th,td{
+    padding:6px 8px;
+    font-size:11px;
+  }
+
+  .table-scroll table{
+    width:max-content;
+    min-width:100%;
+  }
+
+  .dashboard-tabs{
+    gap:8px;
+  }
+
+  .tab-btn{
+    width:100%;
+    padding:11px 14px;
+  }
+}
+
+@media(max-width:1100px){
+  .span3,.span4,.span5,.span6,.span7,.span8{grid-column:span 12}
+  .kpis{grid-template-columns:repeat(2,1fr)}
+}
+
+@media(max-width:650px){
+  main,header{padding-left:14px;padding-right:14px}
+  .kpis{grid-template-columns:1fr}
+}
+
+/* Ajuste definitivo: la columna Avance se mantiene dentro de Saldos por monte */
+.summary-montes{
+  grid-column:span 5;
+  min-width:0;
+}
+
+.summary-montes .table-scroll{
+  overflow-x:hidden !important;
+}
+
+.summary-montes table{
+  width:100% !important;
+  min-width:0 !important;
+  table-layout:fixed !important;
+}
+
+.summary-montes th,
+.summary-montes td{
+  white-space:nowrap !important;
+  overflow:hidden;
+  text-overflow:ellipsis;
+  padding-left:6px;
+  padding-right:6px;
+}
+
+.summary-montes th{
+  font-size:10px;
+}
+
+.summary-montes td{
+  font-size:11px;
+}
+
+.summary-montes th:nth-child(1),
+.summary-montes td:nth-child(1){width:29% !important;}
+.summary-montes th:nth-child(2),
+.summary-montes td:nth-child(2){width:15% !important;}
+.summary-montes th:nth-child(3),
+.summary-montes td:nth-child(3){width:15% !important;}
+.summary-montes th:nth-child(4),
+.summary-montes td:nth-child(4){width:17% !important;}
+.summary-montes th:nth-child(5),
+.summary-montes td:nth-child(5){width:24% !important;}
+
+.summary-montes .progress-cell{
+  min-width:0 !important;
+  white-space:normal !important;
+  overflow:visible !important;
+}
+
+.summary-montes .progress-bar{
+  display:block !important;
+  width:100% !important;
+  min-width:0 !important;
+  height:12px !important;
+  background:#24324f !important;
+  border:1px solid rgba(255,255,255,.12);
+  border-radius:999px;
+  overflow:hidden !important;
+}
+
+.summary-montes .progress-bar i{
+  display:block !important;
+  min-width:3px;
+  height:100% !important;
+  background:linear-gradient(90deg,#2fd27a,#36d1dc) !important;
+  border-radius:999px;
+}
+
+.summary-montes .progress-text{
+  display:block !important;
+  margin-top:4px;
+  font-size:10px !important;
+  font-weight:850;
+  color:#c8d6ee;
+  white-space:nowrap !important;
+}
+
+@media(max-width:1100px){
+  .summary-montes .table-scroll{overflow-x:auto !important;}
+  .summary-montes table{min-width:720px !important;}
+}
+
+
+/* Avance: barra de progreso dentro de su propia columna */
+.summary-montes .table-scroll{
+  overflow-x:hidden !important;
+}
+.summary-montes table{
+  width:100% !important;
+  min-width:0 !important;
+  table-layout:fixed !important;
+}
+.summary-montes th:nth-child(1),
+.summary-montes td:nth-child(1){ width:30% !important; }
+.summary-montes th:nth-child(2),
+.summary-montes td:nth-child(2){ width:15% !important; }
+.summary-montes th:nth-child(3),
+.summary-montes td:nth-child(3){ width:15% !important; }
+.summary-montes th:nth-child(4),
+.summary-montes td:nth-child(4){ width:17% !important; }
+.summary-montes th:nth-child(5),
+.summary-montes td:nth-child(5){ width:23% !important; }
+.summary-montes .progress-cell{
+  display:table-cell !important;
+  min-width:0 !important;
+  padding:7px 8px !important;
+  white-space:normal !important;
+  overflow:visible !important;
+}
+.summary-montes .progress-bar{
+  display:block !important;
+  width:100% !important;
+  min-width:0 !important;
+  height:10px !important;
+  background:#24324f !important;
+  border:1px solid rgba(255,255,255,.12) !important;
+  border-radius:999px !important;
+  overflow:hidden !important;
+}
+.summary-montes .progress-bar i{
+  display:block !important;
+  height:100% !important;
+  min-width:0 !important;
+  background:linear-gradient(90deg,#2fd27a,#36d1dc) !important;
+  border-radius:999px !important;
+}
+.summary-montes .progress-text{
+  display:block !important;
+  margin-top:4px !important;
+  font-size:10px !important;
+  font-weight:850 !important;
+  color:#c8d6ee !important;
+  white-space:nowrap !important;
+}
+@media(max-width:1100px){
+  .summary-montes .table-scroll{ overflow-x:auto !important; }
+  .summary-montes table{ min-width:720px !important; }
+}
+
+
+
+/* Gráficos de Rolos */
+.chart-card{
+  min-height:310px;
+}
+.chart-wrap{
+  position:relative;
+  height:245px;
+  width:100%;
+}
+.chart-card h2{
+  margin-bottom:8px;
+}
+@media(max-width:650px){
+  .chart-card{min-height:270px;}
+  .chart-wrap{height:210px;}
+}
+
+
+/* Contrato UPM: selector anual y gráfico histórico */
+.contract-toolbar{
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  gap:8px;
+  flex-wrap:wrap;
+  margin:0 0 14px;
+}
+.contract-filter-label{
+  color:var(--muted);
+  font-size:12px;
+  font-weight:750;
+  margin-right:4px;
+  text-transform:uppercase;
+  letter-spacing:.06em;
+}
+.contract-year-btn{
+  border:1px solid var(--line);
+  border-radius:999px;
+  padding:8px 13px;
+  background:rgba(255,255,255,.035);
+  color:#c8d6ee;
+  cursor:pointer;
+  font-weight:750;
+  font-size:12px;
+}
+.contract-year-btn:hover{
+  border-color:var(--blue);
+  background:rgba(78,161,255,.10);
+}
+.contract-year-btn.active{
+  background:linear-gradient(180deg,#4ea1ff,#2d7be0);
+  border-color:#4ea1ff;
+  color:#fff;
+}
+.contract-summary{
+  display:grid;
+  grid-template-columns:repeat(3,minmax(0,1fr));
+  gap:12px;
+  margin-bottom:16px;
+}
+.contract-mini-kpi{
+  background:rgba(255,255,255,.035);
+  border:1px solid var(--line);
+  border-radius:14px;
+  padding:12px;
+  text-align:center;
+}
+.contract-mini-kpi .mini-label{
+  color:var(--muted);
+  font-size:11px;
+  text-transform:uppercase;
+  letter-spacing:.06em;
+  margin-bottom:5px;
+}
+.contract-mini-kpi .mini-value{
+  color:var(--text);
+  font-size:19px;
+  font-weight:850;
+}
+.contract-chart-card{min-height:355px;}
+.contract-chart-wrap{height:290px; position:relative;}
+@media(max-width:650px){
+  .contract-summary{grid-template-columns:1fr;}
+  .contract-chart-wrap{height:245px;}
+  .contract-year-btn{padding:7px 11px;}
+}
+
+
+/* Corrección móvil: las tarjetas personalizadas del resumen ocupan todo el ancho. */
+@media (max-width: 1100px){
+  #page-resumen .summary-montes,
+  #page-resumen .summary-produccion,
+  #page-resumen .summary-stocks{
+    grid-column: 1 / -1 !important;
+    width: 100% !important;
+    min-width: 0 !important;
+  }
+}
+
+@media (max-width: 650px){
+  #page-resumen .summary-montes,
+  #page-resumen .summary-produccion,
+  #page-resumen .summary-stocks{
+    grid-column: 1 / -1 !important;
+  }
+
+  /* La tabla conserva sus columnas y se desplaza dentro de la tarjeta, no el dashboard entero. */
+  #page-resumen .summary-montes .table-scroll{
+    overflow-x: auto !important;
+  }
+
+  #page-resumen .summary-montes table{
+    min-width: 720px !important;
+  }
+}
+
+
+/* Vista integrada: Densidades */
+#page-densidades,
+#page-tiempos-descarga{
+  width:100%;
+}
+
+#page-densidades .page-title,
+#page-tiempos-descarga .page-title{
+  margin-bottom:8px;
+}
+
+.density-embed-card,
+.download-embed-card{
+  width:100%;
+  min-height:calc(100vh - 230px);
+  padding:0;
+  overflow:hidden;
+  background:#101820;
+}
+
+.density-embed,
+.download-embed{
+  display:block;
+  width:100%;
+  height:calc(100vh - 240px);
+  min-height:1800px;
+  border:0;
+  background:#101820;
+}
+
+@media(max-width:650px){
+  .density-embed-card,
+  .download-embed-card{
+    min-height:calc(100vh - 175px);
+    border-radius:14px;
+  }
+
+  .density-embed,
+  .download-embed{
+    height:calc(100vh - 185px);
+    min-height:2200px;
+  }
+}
+
+
+/* Vista integrada: Pilas en Monte */
+#page-pilas{
+  width:100%;
+}
+
+.pilas-embed-card{
+  width:100%;
+  min-height:2200px;
+  padding:0;
+  overflow:hidden;
+  background:#07141f;
+}
+
+.pilas-embed{
+  display:block;
+  width:100%;
+  height:2200px;
+  min-height:2200px;
+  border:0;
+  background:#07141f;
+}
+
+@media(max-width:650px){
+  .pilas-embed-card{
+    min-height:2400px;
+    border-radius:14px;
+  }
+
+  .pilas-embed{
+    height:2400px;
+    min-height:2400px;
+  }
+}
+
+
+/* Pilas en Monte a pantalla completa */
+#page-pilas{width:100vw !important; margin-left:calc(50% - 50vw) !important;}
+#page-pilas .pilas-embed-card{width:100vw !important; max-width:none !important; border-radius:0 !important;}
+#page-pilas .pilas-embed{width:100vw !important; max-width:none !important;}
+
+
+/* Ajuste estable Pilas en Monte */
+#page-pilas{width:100% !important;}
+#page-pilas .pilas-embed-card{width:100% !important;max-width:none !important;padding:0 !important;overflow:hidden !important;}
+#page-pilas .pilas-embed{display:block;width:100% !important;max-width:none !important;height:2200px !important;min-height:2200px !important;border:0;}
+@media(max-width:650px){#page-pilas .pilas-embed{height:2400px !important;min-height:2400px !important;}}
+
+
+/* Vista integrada: MCS Recibidos */
+#page-mcs-recibidos{
+  width:100%;
+}
+
+.mcs-recibidos-embed-card{
+  width:100%;
+  min-height:4300px;
+  padding:0;
+  overflow:hidden;
+  background:#0b1220;
+}
+
+.mcs-recibidos-embed{
+  display:block;
+  width:100%;
+  height:4300px;
+  min-height:4300px;
+  border:0;
+  overflow:hidden;
+  background:#0b1220;
+}
+
+@media(max-width:650px){
+  .mcs-recibidos-embed-card{
+    min-height:5200px;
+    border-radius:14px;
+  }
+
+  .mcs-recibidos-embed{
+    height:5200px;
+    min-height:5200px;
+  }
+}
+
+</style>
 </head>
 <body>
-<div class="container">
-  <div class="header">
-    <div>
-      <h1>Dashboard Recibo Resúmenes</h1>
-      <div class="subtitle">Información histórica desde el 1.º de enero de 2025</div>
-    </div>
+<header>
+  <div class="title">
+    <h1>Dashboard RESUMEN</h1>
+    <p>Datos al <span id="fechaTitulo">Lunes 22 de junio de 2026</span></p>
   </div>
-
-  <div id="aviso" class="warning"></div>
-
-  <section class="filters">
-    <div><label for="fAnio">Año</label><select id="fAnio"></select></div>
-    <div><label for="fMes">Mes</label><select id="fMes"></select></div>
-    <div><label for="fDeposito">Depósito</label><select id="fDeposito"></select></div>
-    <div><label for="fContrato">Contrato</label><select id="fContrato"></select></div>
-    <div><label for="fMonte">Monte</label><select id="fMonte"></select></div>
-    <button id="btnLimpiar">Limpiar filtros</button>
-  </section>
-
-  <section class="cards">
-    <article class="card"><div class="name">Cantidad de remitos</div><div class="value" id="kRegistros">0</div><div class="detail">Remitos recibidos únicos según filtros</div></article>
-    <article class="card"><div class="name">MCS recibidos</div><div class="value" id="kMcsRecibidos">0</div><div class="detail">Suma de Metros Cubicos sin exportación</div></article>
-    <article class="card"><div class="name">MCS x viaje</div><div class="value" id="kMcsViaje">0</div><div class="detail">MCS recibidos ÷ cantidad de remitos recibidos</div></article>
-    <article class="card"><div class="name">Exportación</div><div class="value" id="kExportacion">0</div><div class="detail">MCS de baja_por_exportación</div></article>
-  </section>
-
-  <section class="panel">
-    <h2>MCS por mes y depósito</h2>
-    <div class="chart-wrap"><canvas id="graficoMes"></canvas></div>
-  </section>
-
-  <section class="panel panel-origen">
-    <h2>MCS por origen</h2>
-    <div class="chart-wrap chart-wrap-origen"><canvas id="graficoDeposito"></canvas></div>
-  </section>
-
-  <section class="panel">
-    <h2>MCS por mes y producto</h2>
-    <div class="chart-wrap"><canvas id="graficoProductoMes"></canvas></div>
-  </section>
-
-  <section class="panel">
-    <div class="panel-title-row">
-      <h2>Detalle de registros</h2>
-      <button id="btnExportar" class="btn-exportar" type="button">Exportar a Excel</button>
+  <div class="upload" id="dataStatus">
+    <span class="pill">Cargando datos publicados…</span>
+  </div>
+</header>
+<main><div class="card" id="empty"><b>Cargando dashboard</b><p class="muted">Conectando con datos.json desde Dropbox…</p></div><div id="dash" style="display: none;">
+    <div class="kpis">
+      <div class="kpi"><div class="label">Stock BDMT en pila de chips</div><div class="value">29.844,48</div><div class="sub">Total stock actual</div></div>
+      <div class="kpi"><div class="label">Saldo Troncos para chipear x Rend.</div><div class="value">30.423,59</div><div class="sub">Total disponible para producción</div></div>
+      <div class="kpi"><div class="label">Total Entregas Contrato UPM</div><div class="value ok">67,8%</div><div class="sub">406.535,76 / 600.006 MCS · 193.470,24 pendientes · 32,2% restante</div></div>
     </div>
-    <div class="table-wrap">
-      <table>
-        <thead><tr id="encabezadoTabla"></tr></thead>
-        <tbody id="cuerpoTabla"></tbody>
-      </table>
-    </div>
-    <div class="field-note" id="notaCampos"></div>
-  </section>
-</div>
-
+    <div class="grid">
+      <section class="card span4"><h2>Saldos por monte</h2><div class="table-scroll"><table><thead><tr><th>Monte</th><th>Cargados</th><th>En monte</th><th>Saldo</th><th>Avance</th></tr></thead><tbody><tr><td class="">Cerro Olivo</td><td class="ok">30.224,54</td><td class="ok">36.303,81</td><td class="ok">6.079,27</td><td class="progress-cell">
+          <div class="progress-bar"><i style="width:83.25444574550157%"></i></div>
+          <div class="progress-text">83,3%</div>
+        </td></tr><tr><td class="">Jean Palacio 2026</td><td class="ok">1.938,77</td><td class="ok">6.000</td><td class="ok">4.061,23</td><td class="progress-cell">
+          <div class="progress-bar"><i style="width:32.312816999999995%"></i></div>
+          <div class="progress-text">32,3%</div>
+        </td></tr><tr><td class="">Quebracho - Almedo SAS</td><td class="ok">32.119,41</td><td class="ok">64.136</td><td class="ok">32.016,59</td><td class="progress-cell">
+          <div class="progress-bar"><i style="width:50.080153221279765%"></i></div>
+          <div class="progress-text">50,1%</div>
+        </td></tr><tr><td class="">Santa Teresa 2025</td><td class="">0</td><td class="ok">90</td><td class="ok">90</td><td class="progress-cell">
+          <div class="progress-bar"><i style="width:0%"></i></div>
+          <div class="progress-text">0,0%</div>
+        </td></tr><tr><td class="">Santa Teresa 2025 - UPM Paso de los Toros</td><td class="ok">28.748,95</td><td class="ok">130.736</td><td class="ok">101.987,05</td><td class="progress-cell">
+          <div class="progress-bar"><i style="width:21.990079243666628%"></i></div>
+          <div class="progress-text">22,0%</div>
+        </td></tr></tbody></table></div></section>
+      <section class="card span4"><h2>Producción diaria BDMT</h2><div class="table-scroll"><table><thead><tr><th>Mes</th><th>Date</th><th>BDMT</th></tr></thead><tbody><tr><td class="">Junio</td><td class="">13-Jun</td><td class="ok">869,92</td></tr><tr><td class="">Junio</td><td class="">14-Jun</td><td class="">0</td></tr><tr><td class="">Junio</td><td class="">15-Jun</td><td class="ok">975,86</td></tr><tr><td class="">Junio</td><td class="">16-Jun</td><td class="ok">859,3</td></tr><tr><td class="">Junio</td><td class="">17-Jun</td><td class="ok">883,37</td></tr><tr><td class="">Junio</td><td class="">18-Jun</td><td class="ok">982,86</td></tr><tr><td class="">Junio</td><td class="">19-Jun</td><td class="ok">907,27</td></tr><tr><td class="">Junio</td><td class="">20-Jun</td><td class="ok">660,05</td></tr><tr><td class="">Junio</td><td class="">21-Jun</td><td class="">0</td></tr><tr><td class="">Junio</td><td class="">22-Jun</td><td class="ok">740,79</td></tr></tbody></table></div></section>
+      <section class="card span4"><h2>Stocks planta FRIMOSA</h2><div class="table-scroll"><table><thead><tr><th>SALDO EN CHIPS</th><th>Portugal G.</th><th>APP</th><th>TOTAL</th></tr></thead><tbody><tr><td class="">Stock BDMT en pila de chips.</td><td class="ok">29.844,48</td><td class="">0</td><td class="ok">29.844,48</td></tr><tr class="subsection-row"><td class="">SALDO EN TRONCOS</td><td class="">Portugal G. 0,58</td><td class="">APP 0,58</td><td class="">TOTAL</td></tr><tr><td class="">Consumido Troncos en pila Chips</td><td class="ok">51.456</td><td class="">0</td><td class="ok">51.456</td></tr><tr><td class="">Alta MCS Pendiente</td><td class="">0</td><td class="">0</td><td class="">0</td></tr><tr><td class="">Saldo Troncos para chipear x Rend.</td><td class="ok">30.423,59</td><td class="">0</td><td class="ok">30.423,59</td></tr><tr class="plain-total-row"><td class="">TOTAL</td><td class="ok">81.879,59</td><td class="">0</td><td class="ok">81.879,59</td></tr><tr class="subsection-row"><td class="">Saldos Troncos Cancha Acopio</td><td class="">STOCK GLO.</td><td class="">DIAS STOCK</td><td class="">STOCK</td></tr><tr><td class="">15-Jun</td><td class="ok">34.108</td><td class="ok">21,98</td><td class="ok">34.108</td></tr><tr><td class="">16-Jun</td><td class="ok">34.296</td><td class="ok">22,1</td><td class="ok">34.296</td></tr><tr><td class="">17-Jun</td><td class="ok">34.226</td><td class="ok">22,06</td><td class="ok">34.226</td></tr><tr><td class="">18-Jun</td><td class="ok">34.165</td><td class="ok">22,02</td><td class="ok">34.165</td></tr><tr><td class="">19-Jun</td><td class="ok">32.978</td><td class="ok">21,25</td><td class="ok">32.978</td></tr><tr><td class="">20-Jun</td><td class="ok">31.760</td><td class="ok">20,47</td><td class="ok">31.760</td></tr><tr><td class="">21-Jun</td><td class="ok">31.760</td><td class="ok">20,47</td><td class="ok">31.760</td></tr></tbody></table></div></section>
+      <section class="card span5"><h2>Rolos · ingreso diario</h2><div class="table-scroll"><table><thead><tr><th>Día</th><th>Metros Cubicos</th><th>Densidad Promedio</th><th>Total Camiones</th></tr></thead><tbody><tr><td class="">22-Jun</td><td class="">0</td><td class="">0,000</td><td class="">0</td></tr><tr><td class="">23-Jun</td><td class="">0</td><td class="">0,000</td><td class="">0</td></tr><tr><td class="">24-Jun</td><td class="">0</td><td class="">0,000</td><td class="">0</td></tr><tr><td class="">25-Jun</td><td class="">0</td><td class="">0,000</td><td class="">0</td></tr><tr><td class="">26-Jun</td><td class="">0</td><td class="">0,000</td><td class="">0</td></tr><tr><td class="">27-Jun</td><td class="">0</td><td class="">0,000</td><td class="">0</td></tr><tr><td class="">28-Jun</td><td class="">0</td><td class="">0,000</td><td class="">0</td></tr><tr class="total-row"><td class="">TOTAL</td><td class="">0</td><td class="">0,000</td><td class="">0</td></tr></tbody></table></div></section>
+      <section class="card span4"><h2>Rolos · ingreso semanal</h2><div class="table-scroll"><table><thead><tr><th>Semana</th><th>Metros Cubicos</th><th>Densidad Promedio</th></tr></thead><tbody><tr><td class="ok">26</td><td class="">0</td><td class="">0,000</td></tr><tr><td class="ok">25</td><td class="ok">6.411,68</td><td class="ok">0,976</td></tr><tr><td class="ok">24</td><td class="ok">6.075,82</td><td class="ok">0,978</td></tr><tr><td class="ok">23</td><td class="ok">8.695,82</td><td class="ok">0,972</td></tr><tr><td class="ok">22</td><td class="ok">7.977,16</td><td class="ok">0,945</td></tr><tr><td class="ok">21</td><td class="ok">11.903,39</td><td class="ok">0,915</td></tr><tr><td class="ok">20</td><td class="ok">7.706,91</td><td class="ok">0,925</td></tr><tr><td class="ok">19</td><td class="ok">2.745,38</td><td class="ok">0,902</td></tr><tr><td class="ok">18</td><td class="ok">6.382,69</td><td class="ok">0,910</td></tr><tr><td class="ok">17</td><td class="ok">7.035,65</td><td class="ok">0,918</td></tr><tr><td class="ok">16</td><td class="ok">5.278,35</td><td class="ok">0,893</td></tr><tr class="total-row"><td class="">TOTAL</td><td class="ok">70.212,84</td><td class="ok">0,933</td></tr></tbody></table></div></section>
+      <section class="card span3"><h2>Rolos · ingreso mensual</h2><div class="table-scroll"><table><thead><tr><th>Mes</th><th>Metros Cubicos</th><th>Densidad Promedio</th></tr></thead><tbody><tr><td class="">enero</td><td class="ok">8.320,47</td><td class="ok">0,906</td></tr><tr><td class="">febrero</td><td class="ok">9.866,18</td><td class="ok">0,896</td></tr><tr><td class="">marzo</td><td class="ok">12.294,46</td><td class="ok">0,866</td></tr><tr><td class="">abril</td><td class="ok">18.930,7</td><td class="ok">0,893</td></tr><tr><td class="">mayo</td><td class="ok">30.131,48</td><td class="ok">0,918</td></tr><tr><td class="">junio</td><td class="ok">27.767,37</td><td class="ok">0,967</td></tr><tr><td class="">julio</td><td class="">0</td><td class="">0,000</td></tr><tr><td class="">agosto</td><td class="">0</td><td class="">0,000</td></tr><tr><td class="">setiembre</td><td class="">0</td><td class="">0,000</td></tr><tr><td class="">octubre</td><td class="">0</td><td class="">0,000</td></tr><tr><td class="">noviembre</td><td class="">0</td><td class="">0,000</td></tr><tr><td class="">diciembre</td><td class="">0</td><td class="">0,000</td></tr><tr class="total-row"><td class="">TOTAL</td><td class="ok">107.310,66</td><td class="ok">0,917</td></tr></tbody></table></div></section>
+      <section class="card span4"><h2>Trozas · ingreso diario</h2><div class="table-scroll"><table><thead><tr><th>Día</th><th>Viajes</th></tr></thead><tbody><tr><td class="">22-Jun</td><td class="">0</td></tr><tr><td class="">23-Jun</td><td class="">0</td></tr><tr><td class="">24-Jun</td><td class="">0</td></tr><tr><td class="">25-Jun</td><td class="">0</td></tr><tr><td class="">26-Jun</td><td class="">0</td></tr><tr><td class="">27-Jun</td><td class="">0</td></tr><tr><td class="">28-Jun</td><td class="">0</td></tr><tr class="total-row"><td class="">TOTAL</td><td class="">0</td></tr></tbody></table></div></section>
+      <section class="card span4"><h2>Trozas · ingreso semanal</h2><div class="table-scroll"><table><thead><tr><th>Semana</th><th>Viajes</th></tr></thead><tbody><tr><td class="ok">26</td><td class="">0</td></tr><tr><td class="ok">25</td><td class="ok">18</td></tr><tr><td class="ok">24</td><td class="ok">2</td></tr><tr><td class="ok">23</td><td class="ok">48</td></tr><tr><td class="ok">22</td><td class="ok">15</td></tr><tr><td class="ok">21</td><td class="ok">18</td></tr><tr><td class="ok">20</td><td class="ok">33</td></tr><tr><td class="ok">19</td><td class="ok">29</td></tr><tr><td class="ok">18</td><td class="ok">43</td></tr><tr><td class="ok">17</td><td class="ok">48</td></tr><tr><td class="ok">16</td><td class="ok">43</td></tr><tr class="total-row"><td class="">TOTAL</td><td class="ok">297</td></tr></tbody></table></div></section>
+      <section class="card span4"><h2>Trozas · ingreso mensual</h2><div class="table-scroll"><table><thead><tr><th>Mes</th><th>Viajes</th></tr></thead><tbody><tr><td class="">enero</td><td class="">0</td></tr><tr><td class="">febrero</td><td class="ok">49</td></tr><tr><td class="">marzo</td><td class="ok">168</td></tr><tr><td class="">abril</td><td class="ok">175</td></tr><tr><td class="">mayo</td><td class="ok">128</td></tr><tr><td class="">junio</td><td class="ok">78</td></tr><tr><td class="">julio</td><td class="">0</td></tr><tr><td class="">agosto</td><td class="">0</td></tr><tr><td class="">setiembre</td><td class="">0</td></tr><tr><td class="">octubre</td><td class="">0</td></tr><tr><td class="">noviembre</td><td class="">0</td></tr><tr><td class="">diciembre</td><td class="">0</td></tr><tr class="total-row"><td class="">TOTAL</td><td class="ok">598</td></tr></tbody></table></div></section>
+      <section class="card span12"><h2>Entregas FAS a UPM PDT · año actual con acumulado histórico</h2><div class="table-scroll"><table><thead><tr><th>Mes</th><th>Fecha cierre</th><th>A entregar MCS</th><th>Entregado MCS</th><th>Saldo Mensual</th><th>Días Entregas 15 Cam/Dia</th><th>Entrega Anual</th><th>Entrega Contrato</th></tr></thead><tbody><tr><td class="">Enero 2026</td><td class="">28-Ene-2026</td><td class="ok">10.957</td><td class="ok">10.418,83</td><td class="bad">-538,17</td><td class="ok">0,93</td><td class="ok">95,1%</td><td class="ok">99,6%</td></tr><tr><td class="">Febrero 2026</td><td class="">25-Feb-2026</td><td class="ok">10.957</td><td class="ok">13.896,6</td><td class="ok">2.939,6</td><td class="bad">-5,1</td><td class="ok">111,0%</td><td class="ok">100,4%</td></tr><tr><td class="">Marzo 2026</td><td class="">27-Mar-2026</td><td class="ok">10.957</td><td class="ok">3.860,45</td><td class="bad">-7.096,55</td><td class="ok">12,32</td><td class="ok">85,7%</td><td class="ok">98,5%</td></tr><tr><td class="">Abril 2026</td><td class="">27-Abr-2026</td><td class="ok">10.957</td><td class="ok">5.085,67</td><td class="bad">-5.871,33</td><td class="ok">10,19</td><td class="ok">75,9%</td><td class="ok">97,1%</td></tr><tr><td class="">Mayo 2026</td><td class="">27-May-2026</td><td class="ok">10.957</td><td class="ok">10.910,5</td><td class="bad">-46,5</td><td class="ok">0,08</td><td class="ok">80,6%</td><td class="ok">97,2%</td></tr><tr><td class="">Junio 2026</td><td class="">26-Jun-2026</td><td class="ok">10.957</td><td class="ok">9.349,66</td><td class="bad">-1.607,34</td><td class="ok">3,25</td><td class="ok">81,4%</td><td class="ok">96,9%</td></tr><tr><td class="">Julio 2026</td><td class="">29-Jul-2026</td><td class="ok">10.957</td><td class="">0</td><td class="bad">-10.957</td><td class="ok">22,14</td><td class="ok">69,8%</td><td class="ok">94,4%</td></tr><tr><td class="">Agosto 2026</td><td class="">27-Ago-2026</td><td class="ok">10.957</td><td class="">0</td><td class="bad">-10.957</td><td class="ok">22,14</td><td class="ok">61,1%</td><td class="ok">92,0%</td></tr><tr><td class="">Septiembre 2026</td><td class="">28-Sep-2026</td><td class="ok">10.957</td><td class="">0</td><td class="bad">-10.957</td><td class="ok">22,14</td><td class="ok">54,3%</td><td class="ok">89,8%</td></tr><tr><td class="">Octubre 2026</td><td class="">28-Oct-2026</td><td class="ok">5.479</td><td class="">0</td><td class="bad">-5.479</td><td class="ok">11,07</td><td class="ok">51,4%</td><td class="ok">88,7%</td></tr><tr><td class="">Noviembre 2026</td><td class="">26-Nov-2026</td><td class="ok">10.957</td><td class="">0</td><td class="bad">-10.957</td><td class="ok">22,14</td><td class="ok">46,5%</td><td class="ok">86,7%</td></tr><tr><td class="">Diciembre 2026</td><td class="">29-Dic-2026</td><td class="ok">10.957</td><td class="">0</td><td class="bad">-10.957</td><td class="ok">22,14</td><td class="ok">42,5%</td><td class="ok">84,7%</td></tr><tr class="total-row"><td class="">TOTAL AÑO ACTUAL</td><td class=""></td><td class="ok">126.006</td><td class="ok">53.521,71</td><td class="bad">-72.484,29</td><td class="ok">143,42</td><td class="ok">42,5%</td><td class="ok">84,7%</td></tr><tr class="total-row"><td class="">TOTAL DESDE INICIO</td><td class=""></td><td class="ok">600.006</td><td class="ok">406.535,76</td><td class="bad">-193.470,24</td><td class="ok">143,42</td><td class="ok">67,8%</td><td class="ok">67,8%</td></tr></tbody></table></div></section>
+    </div></div></main>
 <script>
-'use strict';
+const PILAS_ONLINE_HTML = "<!doctype html>\n<html lang=\"es\">\n<head>\n  <meta charset=\"utf-8\">\n  <meta name=\"viewport\" content=\"width=device-width,initial-scale=1\">\n  <title>Dashboard · Pilas Online<\/title>\n  <style>\n    :root{--bg:#07131e;--surface:#0d202f;--surface2:#10293b;--line:#244357;--text:#eef6fa;--muted:#9bb3c2;--accent:#39b6a4;--accent2:#54a8e8;--warn:#f0ad4e;--danger:#ef6b73;--shadow:0 14px 35px rgba(0,0,0,.25)}\n    *{box-sizing:border-box}body{margin:0;background:linear-gradient(135deg,#06111a,#0b1d2a 55%,#07131e);color:var(--text);font:14px/1.45 system-ui,-apple-system,Segoe UI,Roboto,Arial,sans-serif;min-height:100vh}.wrap{width:calc(100% - 8px);max-width:none;margin:0 auto;padding:28px 0 42px}.top{display:flex;gap:20px;align-items:flex-start;justify-content:space-between;margin-bottom:22px}.eyebrow{font-size:11px;font-weight:800;letter-spacing:.14em;color:var(--accent);text-transform:uppercase}.title{margin:3px 0 4px;font-size:clamp(26px,4vw,38px);letter-spacing:-.04em}.subtitle{margin:0;color:var(--muted)}.status{padding:10px 13px;border-radius:10px;background:rgba(57,182,164,.12);border:1px solid rgba(57,182,164,.35);color:#c4f3ea;font-size:12px;max-width:460px}.status.error{background:rgba(239,107,115,.1);border-color:rgba(239,107,115,.45);color:#ffd7da}.actions{display:flex;gap:8px;flex-wrap:wrap;justify-content:flex-end;margin-top:10px}.btn{border:1px solid var(--line);background:#123248;color:#eaf7fb;padding:8px 11px;border-radius:8px;cursor:pointer;font:inherit;font-size:12px;text-decoration:none}.btn:hover{border-color:var(--accent);background:#16445e}.btn.primary{background:var(--accent);border-color:var(--accent);color:#06221e;font-weight:750}.btn input{display:none}.toolbar{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px;padding:14px;background:rgba(13,32,47,.88);border:1px solid var(--line);box-shadow:var(--shadow);border-radius:14px;margin-bottom:18px}.field label{display:block;font-size:10px;color:var(--muted);font-weight:800;letter-spacing:.09em;text-transform:uppercase;margin-bottom:5px}.field select,.field input{width:100%;height:34px;border:1px solid #2a4c61;color:var(--text);background:#0a1b29;border-radius:8px;padding:0 10px;font:inherit;outline:0}.field select:focus,.field input:focus{border-color:var(--accent)}.kpis{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px;margin-bottom:18px}.kpi{background:linear-gradient(180deg,rgba(16,41,59,.98),rgba(11,29,43,.98));border:1px solid var(--line);border-radius:14px;padding:15px;box-shadow:var(--shadow);min-height:116px}.kpi .label{color:var(--muted);font-size:11px;font-weight:750;text-transform:uppercase;letter-spacing:.06em}.kpi .value{font-size:clamp(23px,3vw,34px);font-weight:800;letter-spacing:-.04em;margin-top:9px}.kpi .note{margin-top:4px;color:#b6ccd8;font-size:12px}.grid{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:16px}.card{background:rgba(13,32,47,.9);border:1px solid var(--line);border-radius:14px;box-shadow:var(--shadow);padding:15px;min-width:0}.card.full{grid-column:1/-1}.card-head{display:flex;justify-content:space-between;gap:16px;align-items:center;margin-bottom:12px}.card h2{font-size:15px;margin:0;letter-spacing:-.015em}.small{color:var(--muted);font-size:12px}.estado-matrix{display:grid;grid-template-columns:1fr;gap:10px;min-height:310px;align-content:start}.estado-item{background:linear-gradient(180deg,rgba(18,50,72,.92),rgba(10,27,41,.95));border:1px solid #2a4c61;border-left:4px solid var(--accent);border-radius:10px;padding:13px;min-width:0}.estado-name{font-size:12px;font-weight:800;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.estado-metrics{display:flex;justify-content:space-between;gap:10px;margin-top:10px}.estado-metric{min-width:0}.estado-metric span{display:block;color:var(--muted);font-size:10px;text-transform:uppercase;letter-spacing:.05em}.estado-metric strong{display:block;margin-top:2px;font-size:19px;letter-spacing:-.03em}.estado-bar,.bar-track{height:5px;background:rgba(155,179,194,.16);border-radius:99px;overflow:hidden;margin-top:12px}.estado-bar i,.bar-track i{display:block;height:100%;background:var(--accent);border-radius:99px}.estado-empty{display:flex;align-items:center;justify-content:center;min-height:310px;color:var(--muted);border:1px dashed #2a4c61;border-radius:10px}.bar-list{display:grid;gap:12px;min-height:310px;align-content:start}.bar-row{display:grid;grid-template-columns:minmax(120px,36%) 1fr auto;gap:10px;align-items:center}.bar-name{font-size:12px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.bar-value{font-variant-numeric:tabular-nums;font-size:12px;color:#d8edf5;text-align:right}.bar-track{margin:0;height:10px}.bar-track i{background:linear-gradient(90deg,var(--accent),var(--accent2))}.table-wrap{overflow:auto;border:1px solid #244357;border-radius:10px;max-height:520px}.table{border-collapse:collapse;width:100%;min-width:950px;font-size:12px}.table th{position:sticky;top:0;background:#123248;color:#d9edf4;text-align:left;padding:10px;border-bottom:1px solid #2b5268;font-size:10px;letter-spacing:.06em;text-transform:uppercase;z-index:1}.table td{padding:9px 10px;border-bottom:1px solid rgba(42,76,97,.55);white-space:nowrap}.table tr:hover td{background:rgba(57,182,164,.06)}.pill{display:inline-block;padding:3px 8px;border-radius:99px;font-size:10px;font-weight:800;letter-spacing:.04em;background:rgba(84,168,232,.17);color:#bfe0fb}.pill.warn{background:rgba(240,173,78,.15);color:#ffd590}.pill.danger{background:rgba(239,107,115,.15);color:#ffbec3}.product-matrix-wrap{overflow:auto;border:1px solid #244357;border-radius:10px;max-height:520px}.product-matrix{width:100%;border-collapse:collapse;min-width:760px;font-size:12px}.product-matrix th{position:sticky;top:0;background:#123248;color:#d9edf4;text-align:center;padding:10px;border-bottom:1px solid #2b5268;font-size:10px;letter-spacing:.06em;text-transform:uppercase;z-index:2}.product-matrix th:first-child{text-align:center;z-index:2;width:180px;max-width:180px}.product-matrix td{padding:10px;border-bottom:1px solid rgba(42,76,97,.55);text-align:center;vertical-align:middle;font-variant-numeric:tabular-nums}.product-matrix td:first-child{background:#0d202f;text-align:center;font-weight:750;width:180px;max-width:180px;white-space:normal;line-height:1.25}.product-matrix tr:hover td{background:rgba(57,182,164,.06)}.product-matrix tr:hover td:first-child{background:#10293b}.product-matrix .cell-volume{font-weight:800;font-size:13px}.product-matrix .cell-count{display:block;color:var(--muted);font-size:10px;margin-top:2px}.product-matrix .cell-empty{color:#638093}.product-matrix .total-cell{background:rgba(84,168,232,.09);font-weight:800}.empty{padding:48px 20px;text-align:center;color:var(--muted)}.table-actions{display:flex;justify-content:center;padding:12px}.foot{color:#7f9aaa;font-size:11px;padding:13px 3px 0}.hidden{display:none!important}@media(max-width:1000px){.kpis{grid-template-columns:repeat(3,1fr)}.toolbar{grid-template-columns:repeat(2,1fr)}.top{display:block}.status{margin-top:14px}.actions{justify-content:flex-start}}@media(max-width:650px){.estado-matrix{grid-template-columns:1fr;min-height:auto}.wrap{width:min(100% - 22px,1480px);padding-top:18px}.kpis{grid-template-columns:repeat(2,1fr)}.grid{grid-template-columns:1fr}.toolbar{grid-template-columns:1fr}.kpi{min-height:101px}.kpi .value{font-size:27px}.bar-row{grid-template-columns:minmax(90px,36%) 1fr}}\n.map-status{margin:0 0 10px;color:var(--muted);font-size:12px}.map{height:620px;border:1px solid #244357;border-radius:10px;overflow:hidden;background:#0a1b29;position:relative}.map svg{width:100%;height:100%;display:block}.map .svg-map-label{fill:#9bb3c2;font-size:12px;font-family:system-ui,-apple-system,Segoe UI,Roboto,Arial,sans-serif}.map .svg-map-note{fill:#6f8c9d;font-size:11px;font-family:system-ui,-apple-system,Segoe UI,Roboto,Arial,sans-serif}.map .svg-map-point{cursor:pointer;stroke:#eaf7fb;stroke-width:1.2}.map .svg-map-point:hover{stroke-width:3}.map-empty{height:620px;display:flex;align-items:center;justify-content:center;border:1px dashed #2a4c61;border-radius:10px;color:var(--muted);text-align:center;padding:24px}.map-popup{font:12px/1.45 system-ui,-apple-system,Segoe UI,Roboto,Arial,sans-serif;color:#173042;min-width:170px}.map-popup strong{display:block;margin-bottom:4px;color:#0b3b48}.leaflet-container{font:inherit}.leaflet-popup-content-wrapper,.leaflet-popup-tip{background:#f4fbff;color:#173042}.leaflet-control-attribution{font-size:10px!important}@media(max-width:650px){.map,.map-empty{height:530px}}\n  \n@media(max-width:650px){.map,.map-empty{height:530px!important}}\n.map,.map-empty{height:620px!important}\n.wrap{width:calc(100% - 8px)!important;max-width:none!important}\n/* ==========================================================\n   ALINEACIÓN CENTRAL GENERAL\n   ========================================================== */\n.top, .top > div, .title, .subtitle, .eyebrow, .status { text-align: center !important; }\n.top { justify-content: center !important; align-items: center !important; flex-direction: column !important; }\n.kpi, .kpi .label, .kpi .value, .kpi .note { text-align: center !important; align-items: center !important; }\n.card-head { justify-content: center !important; text-align: center !important; flex-direction: column !important; }\n.card h2, .small, .field label, .bar-name, .bar-value, .estado-name, .estado-metric, .estado-metric span, .estado-metric strong { text-align: center !important; }\n.estado-metrics { justify-content: space-around !important; }\n.bar-row { grid-template-columns: minmax(160px,36%) 1fr minmax(90px,auto) !important; }\n.table th, .table td { text-align: center !important; }\n.table th, .table td { vertical-align: middle !important; }\n.product-matrix th, .product-matrix td, .product-matrix th:first-child, .product-matrix td:first-child { text-align: center !important; }\n.product-matrix th:first-child, .product-matrix td:first-child { width: 180px !important; max-width: 180px !important; min-width: 150px !important; white-space: normal !important; font-size: 11px !important; line-height: 1.25 !important; position: static !important; left: auto !important; }\n.table-actions { justify-content: center !important; }\n\n\n/* Ajuste móvil matriz producto: sin columna fija y con producto más angosto */\n@media(max-width:650px){\n  .product-matrix-wrap{ overflow-x:auto !important; -webkit-overflow-scrolling:touch; }\n  .product-matrix{ min-width:620px !important; font-size:10px !important; }\n  .product-matrix th, .product-matrix td{ padding:7px 6px !important; }\n  .product-matrix th:first-child, .product-matrix td:first-child{\n    position:static !important; left:auto !important; z-index:auto !important;\n    width:125px !important; min-width:125px !important; max-width:125px !important;\n    font-size:9px !important; line-height:1.18 !important; white-space:normal !important;\n  }\n  .product-matrix .cell-volume{ font-size:10px !important; }\n  .product-matrix .cell-count{ font-size:8px !important; }\n}\n\n\n/* Reporte de ubicación por coordenadas */\n.map-report{height:620px;border:1px solid #244357;border-radius:10px;overflow:hidden;background:radial-gradient(circle at 35% 30%,rgba(57,182,164,.10),transparent 34%),#081824;position:relative}\n.map-report svg{width:100%;height:100%;display:block}\n.map-grid-line{stroke:rgba(155,179,194,.13);stroke-width:1}\n.map-axis-text{fill:#9bb3c2;font-size:11px;font-family:system-ui,-apple-system,Segoe UI,Roboto,Arial,sans-serif}\n.map-point{stroke:#eef6fa;stroke-width:1.2;cursor:pointer;opacity:.86}\n.map-point:hover{stroke-width:3;opacity:1}\n.map-label{fill:#d9edf4;font-weight:800;font-size:13px;font-family:system-ui,-apple-system,Segoe UI,Roboto,Arial,sans-serif}\n.map-legend-text{fill:#c7dce8;font-size:12px;font-family:system-ui,-apple-system,Segoe UI,Roboto,Arial,sans-serif}\n@media(max-width:650px){.map-report{height:430px}.map-axis-text{font-size:9px}.map-label{font-size:11px}.map-legend-text{font-size:10px}}\n\n\n\n/* Mapa interactivo Leaflet */\n.map-report{height:620px;border:1px solid #244357;border-radius:10px;overflow:hidden;background:#081824;position:relative}\n.leaflet-map{height:100%;width:100%;min-height:620px;background:#081824}\n.map-empty{position:absolute;inset:0;z-index:700;background:rgba(8,24,36,.92);display:flex;align-items:center;justify-content:center;border:0;color:var(--muted);text-align:center;padding:24px}\n.map-empty.hidden{display:none!important}\n.leaflet-container{font:inherit;background:#081824;color:#173042}\n.leaflet-popup-content-wrapper,.leaflet-popup-tip{background:#f4fbff;color:#173042}\n.leaflet-popup-content{margin:10px 12px}\n.map-popup{font:12px/1.45 system-ui,-apple-system,Segoe UI,Roboto,Arial,sans-serif;color:#173042;min-width:185px}\n.map-popup strong{display:block;margin-bottom:5px;color:#0b3b48;font-size:13px}\n.pile-marker{width:15px;height:15px;border-radius:50%;border:2px solid #eef6fa;box-shadow:0 0 0 2px rgba(0,0,0,.22),0 2px 7px rgba(0,0,0,.35)}\n@media(max-width:650px){.map-report{height:430px}.leaflet-map{min-height:430px}}\n\n\n\n/* ==========================================================\n   MAPA COMPACTO\n   ========================================================== */\n.card.full:has(#mapBox) {\n  max-width: 760px !important;\n  margin-left: auto !important;\n  margin-right: auto !important;\n  width: 100% !important;\n}\n#mapBox.map-report {\n  height: 240px !important;\n  min-height: 240px !important;\n  max-height: 240px !important;\n  max-width: 720px !important;\n  margin: 0 auto !important;\n}\n#leafletMap.leaflet-map {\n  height: 240px !important;\n  min-height: 240px !important;\n  max-height: 240px !important;\n}\n#mapBox .leaflet-control-layers {\n  font-size: 11px !important;\n  line-height: 1.15 !important;\n}\n#mapBox .leaflet-control-layers-expanded {\n  padding: 5px 7px !important;\n}\n#mapBox .leaflet-control-layers label {\n  margin: 2px 0 !important;\n}\n#mapBox .leaflet-control-zoom a {\n  width: 24px !important;\n  height: 24px !important;\n  line-height: 22px !important;\n  font-size: 16px !important;\n}\n#mapBox .leaflet-control-attribution,\n#mapBox .leaflet-bottom.leaflet-right {\n  display: none !important;\n}\n.pile-marker {\n  width: 11px !important;\n  height: 11px !important;\n  border-width: 1.5px !important;\n  box-shadow: 0 0 0 1px rgba(0,0,0,.35), 0 1px 4px rgba(0,0,0,.45) !important;\n}\n@media(max-width:650px){\n  .card.full:has(#mapBox) { max-width: 100% !important; }\n  #mapBox.map-report,\n  #leafletMap.leaflet-map {\n    height: 210px !important;\n    min-height: 210px !important;\n    max-height: 210px !important;\n  }\n}\n\n\n\n/* Ajuste estable: mapa ancho real sin romper carga */\n.card.full:has(#mapBox){max-width:none!important;width:100%!important;margin-left:0!important;margin-right:0!important;}\n#mapBox.map-report{height:680px!important;min-height:680px!important;max-height:none!important;max-width:none!important;width:100%!important;margin:0!important;}\n#leafletMap.leaflet-map{height:680px!important;min-height:680px!important;max-height:none!important;width:100%!important;}\n@media(max-width:650px){#mapBox.map-report,#leafletMap.leaflet-map{height:560px!important;min-height:560px!important;max-height:none!important;width:100%!important;}}\n\n\n/* Selección de zona en mapa */\n.map-tools{display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin:0 0 10px}\n.map-tools .btn{padding:7px 10px;font-size:12px}\n.map-tools .btn.active{background:var(--accent);border-color:var(--accent);color:#06221e;font-weight:800}\n.selection-summary{color:#c9e4ee;font-size:12px;background:rgba(57,182,164,.10);border:1px solid rgba(57,182,164,.28);border-radius:8px;padding:7px 10px;line-height:1.35;flex:1;min-width:260px}\n.leaflet-container.selecting-zone{cursor:crosshair!important}\n<\/style>\n<\/head>\n<body>\n<main class=\"wrap\">\n  <section class=\"top\">\n    <div><h1 class=\"title\">Pilas Online<\/h1><\/div>\n    <div class=\"hidden\"><div id=\"status\" class=\"status\">Sincronizando datos...<\/div><div class=\"actions\"><button class=\"btn primary\" id=\"reloadBtn\">↻ Sincronizar ahora<\/button><a class=\"btn\" id=\"sourceBtn\" target=\"_blank\" rel=\"noopener\">Abrir JSON<\/a><label class=\"btn\">Cargar archivo local<input id=\"localFile\" type=\"file\" accept=\".json,.csv\"><\/label><\/div><\/div>\n  <\/section>\n  <section class=\"toolbar\"><div class=\"field\"><label>Predio<\/label><select id=\"predioFilter\"><\/select><\/div><div class=\"field\"><label>Estado<\/label><select id=\"estadoFilter\"><\/select><\/div><\/section>\n  <section class=\"kpis\"><article class=\"kpi\"><div class=\"label\">Pilas visibles<\/div><div class=\"value\" id=\"kpiPilas\">—<\/div><\/article><article class=\"kpi\"><div class=\"label\" id=\"volumeLabel\">Volumen / Stock<\/div><div class=\"value\" id=\"kpiVolumen\">—<\/div><div class=\"note\" id=\"kpiVolumenNote\"><\/div><\/article><article class=\"kpi\"><div class=\"label\">Predios<\/div><div class=\"value\" id=\"kpiPredios\">—<\/div><\/article><\/section>\n  <section class=\"grid\"><article class=\"card\"><div class=\"card-head\"><h2>Volumen por predio<\/h2><\/div><div id=\"predioBars\" class=\"bar-list\"><\/div><\/article><article class=\"card\"><div class=\"card-head\"><h2>Matriz por estado<\/h2><\/div><div id=\"estadoMatrix\" class=\"estado-matrix\"><\/div><\/article><article class=\"card full\"><div class=\"card-head\"><h2>Matriz por producto y estado<\/h2><span class=\"small\" id=\"productoMatrixInfo\">Volumen y cantidad de pilas<\/span><\/div><div id=\"productoMatrixWrap\" class=\"product-matrix-wrap\"><table class=\"product-matrix\"><thead id=\"productoMatrixHead\"><\/thead><tbody id=\"productoMatrixBody\"><\/tbody><\/table><div id=\"productoMatrixEmpty\" class=\"empty hidden\">No se detectó información de producto o estado.<\/div><\/div><\/article><article class=\"card full\"><div class=\"card-head\"><h2>Detalle operativo<\/h2><\/div><div class=\"table-wrap\"><table class=\"table\"><thead id=\"tableHead\"><\/thead><tbody id=\"tableBody\"><\/tbody><\/table><div id=\"empty\" class=\"empty hidden\">No hay registros para los filtros seleccionados.<\/div><\/div><div class=\"table-actions\"><button id=\"moreBtn\" class=\"btn hidden\">Mostrar más registros<\/button><\/div><\/article><article class=\"card full\"><div class=\"card-head\"><h2>Ubicación de pilas<\/h2><span class=\"small\" id=\"mapInfo\"><\/span><\/div><div class=\"map-tools\"><button id=\"selectZoneBtn\" class=\"btn\" type=\"button\">Seleccionar zona<\/button><button id=\"clearZoneBtn\" class=\"btn\" type=\"button\">Limpiar selección<\/button><span id=\"selectionInfo\" class=\"selection-summary\">Presioná “Seleccionar zona” y dibujá un marco sobre el mapa para sumar M3.<\/span><\/div><div id=\"mapBox\" class=\"map-report\"><div id=\"mapEmpty\" class=\"map-empty hidden\">No hay coordenadas válidas para los filtros seleccionados.<\/div><div id=\"leafletMap\" class=\"leaflet-map\"><\/div><\/div><\/article><\/section>\n<\/main>\n\n<script>\n'use strict';\n\n/* La URL queda sin parámetro variable: permite usar Cache Storage en el navegador. */\nconst DROPBOX_URL = 'https://dl.dropbox.com/scl/fi/bx7bxqkh2f3dmwu5664ba/PilasOnline.json?rlkey=cxgums4j1z2pj8jkz0w7a9zmh&dl=1';\nconst CACHE_NAME = 'pilas-online-v5';\nconst TABLE_STEP = 100;\nconst MAX_TABLE_COLUMNS = 12;\n\nconst state = {\n  rows: [],\n  items: [],             // datos preprocesados, una única vez por sincronización\n  columns: [],\n  maps: {},\n  visible: [],\n  shown: TABLE_STEP\n};\n\nlet pilasMap = null;\nlet pilasMarkers = null;\nlet pilasTileLayer = null;\nlet mapLibraryPromise = null;\nlet mapTileFallbackUsed = false;\nlet mapSelection = {\n  active: false,\n  drawing: false,\n  start: null,\n  rectangle: null,\n  points: []\n};\n\n/* Vista inicial del mapa centrada en Uruguay. */\nconst URUGUAY_CENTER = [-32.8, -55.9];\nconst URUGUAY_BOUNDS = [[-35.2, -58.7], [-30.0, -53.0]];\n\nconst $ = id => document.getElementById(id);\n$('sourceBtn').href = DROPBOX_URL;\n\nconst clean = value => String(value ?? '').replace(/\\s+/g, ' ').trim();\nconst norm = value => clean(value)\n  .normalize('NFD').replace(/[\\u0300-\\u036f]/g, '')\n  .toLocaleLowerCase('es-UY').replace(/[^a-z0-9]+/g, ' ').trim();\n\nconst escapeHtml = value => String(value ?? '').replace(/[&<>'\"]/g, char => ({\n  '&':'&amp;', '<':'&lt;', '>':'&gt;', \"'\":'&#39;', '\"':'&quot;'\n}[char]));\n\nconst candidates = {\n  id: ['id','pila','nro pila','numero pila','codigo','identificador'],\n  predio: ['predio','campo','estancia','propiedad'],\n  monte: ['monte','lote','rodal','potrero'],\n  producto: ['producto','tipo de producto','especie','material','clasificacion'],\n  estado: ['estado','situacion','status','condicion'],\n  volumen: ['stock','volumen','mcs','m3','m3s','metros cubicos','volumen m3','saldo','cantidad','bdmt','toneladas'],\n  fecha: ['fecha','creacion','creación','fecha creacion','fecha creación','recepcion','fecha recepcion','fecha de recepcion','fecha alta','alta','fecha carga','fecha ingreso','ultima actualizacion','actualizado'],\n  contratista: ['contratista','empresa','proveedor'],\n  lat: ['lat','latitud','latitude'],\n  lng: ['long','lng','lon','longitud','longitude']\n};\n\nfunction findCol(columns, names) {\n  const normalized = columns.map(norm);\n  let best = null, score = 0;\n  for (let i = 0; i < normalized.length; i++) {\n    for (const name of names) {\n      const n = norm(name);\n      const s = normalized[i] === n ? 100 : (normalized[i].includes(n) || n.includes(normalized[i])) ? 60 : 0;\n      if (s > score) { best = columns[i]; score = s; }\n    }\n  }\n  return score >= 60 ? best : null;\n}\n\nfunction detectMaps(columns) {\n  const result = {};\n  for (const [key, aliases] of Object.entries(candidates)) result[key] = findCol(columns, aliases);\n  return result;\n}\n\nfunction parseNumber(value) {\n  if (typeof value === 'number') return Number.isFinite(value) ? value : null;\n  let text = clean(value);\n  if (!text) return null;\n  text = text.replace(/[^0-9,.-]/g, '');\n  const comma = text.lastIndexOf(','), dot = text.lastIndexOf('.');\n  if (comma > -1 && dot > -1) text = comma > dot ? text.replace(/\\./g,'').replace(',','.') : text.replace(/,/g,'');\n  else if (comma > -1) text = text.replace(',','.');\n  const number = Number(text);\n  return Number.isFinite(number) ? number : null;\n}\n\nfunction parseCoordinate(value, limit) {\n  const raw = clean(value);\n  if (!raw) return null;\n\n  let number = parseNumber(raw);\n  if (number !== null && Math.abs(number) <= limit) return number;\n\n  // Respaldo para coordenadas que llegan sin punto decimal, por ejemplo:\n  // -3375879525  -> -33.75879525\n  const digits = raw.replace(/\\D/g, '');\n  const sign = raw.includes('-') ? -1 : 1;\n  if (digits.length >= 3) {\n    number = Number((sign < 0 ? '-' : '') + digits.slice(0, 2) + '.' + digits.slice(2));\n    if (Number.isFinite(number) && Math.abs(number) <= limit) return number;\n  }\n\n  return null;\n}\n\nfunction parseDate(value) {\n  if (value instanceof Date && !Number.isNaN(+value)) return value;\n  if (typeof value === 'number' && value > 20000 && value < 80000) return new Date(Math.round((value - 25569) * 86400000));\n  const text = clean(value);\n  if (!text) return null;\n  let match = text.match(/^(\\d{1,2})[/-](\\d{1,2})[/-](\\d{2,4})(?:\\s+(\\d{1,2}):(\\d{2})(?::(\\d{2}))?)?$/);\n  if (match) {\n    let year = +match[3]; if (year < 100) year += 2000;\n    return new Date(year, +match[2] - 1, +match[1], +(match[4] || 0), +(match[5] || 0), +(match[6] || 0));\n  }\n  const date = new Date(text);\n  return Number.isNaN(+date) ? null : date;\n}\n\nconst formatNum = (number, decimals = 0) => number === null || number === undefined || Number.isNaN(number)\n  ? '—'\n  : new Intl.NumberFormat('es-UY', { minimumFractionDigits: decimals, maximumFractionDigits: decimals }).format(number);\n\nconst formatDate = date => date\n  ? new Intl.DateTimeFormat('es-UY', { dateStyle:'medium' }).format(date)\n  : '—';\n\nfunction setStatus(message, isError = false) {\n  $('status').textContent = message;\n  $('status').classList.toggle('error', isError);\n}\n\nfunction fillSelect(id, values, label) {\n  const element = $(id), previous = element.value;\n  element.innerHTML = '<option value=\"\">'+escapeHtml(label)+'<\/option>' +\n    values.map(value => '<option value=\"'+escapeHtml(value)+'\">'+escapeHtml(value)+'<\/option>').join('');\n  element.value = values.includes(previous) ? previous : '';\n}\n\n/* Preprocesa solo una vez: evita leer, normalizar y convertir cada fila en cada filtro. */\nfunction prepareItems(rows) {\n  const m = state.maps;\n  const out = new Array(rows.length);\n  for (let index = 0; index < rows.length; index++) {\n    const row = rows[index];\n    const idRaw = m.id ? clean(row[m.id]) : '';\n    const idNumber = parseNumber(idRaw);\n    const predio = m.predio ? clean(row[m.predio]) : '';\n    const producto = m.producto ? clean(row[m.producto]) : '';\n    const estado = m.estado ? clean(row[m.estado]) : '';\n    const volumen = m.volumen ? parseNumber(row[m.volumen]) : null;\n    const fecha = m.fecha ? parseDate(row[m.fecha]) : null;\n    const lat = m.lat ? parseCoordinate(row[m.lat], 90) : null;\n    const lng = m.lng ? parseCoordinate(row[m.lng], 180) : null;\n    out[index] = {\n      row,\n      idRaw,\n      idNumber,\n      predio,\n      producto,\n      estado,\n      volumen: volumen === null ? 0 : volumen,\n      hasVolumen: volumen !== null,\n      fecha,\n      fechaMs: fecha ? +fecha : 0,\n      lat,\n      lng,\n      hasCoordinates: Number.isFinite(lat) && Number.isFinite(lng),\n      search: norm(state.columns.map(column => row[column]).join(' '))\n    };\n  }\n  return out;\n}\n\nfunction buildFilters() {\n  const predios = new Set(), estados = new Set();\n  for (const item of state.items) {\n    if (item.predio) predios.add(item.predio);\n    if (item.estado) estados.add(item.estado);\n  }\n  fillSelect('predioFilter', [...predios].sort((a,b)=>a.localeCompare(b,'es')), 'Todos los predios');\n  fillSelect('estadoFilter', [...estados].sort((a,b)=>a.localeCompare(b,'es')), 'Todos los estados');\n}\n\nfunction getVisibleItems() {\n  const predio = $('predioFilter').value;\n  const estado = $('estadoFilter').value;\n\n  if (!predio && !estado) return state.items;\n  return state.items.filter(item =>\n    (!predio || item.predio === predio) &&\n    (!estado || item.estado === estado)\n  );\n}\n\nconst colors = ['#39b6a4','#54a8e8','#f0ad4e','#ef6b73','#9075ef','#38c985','#d27bd6','#f1c453'];\n\nfunction estadoParaMatriz(estado) {\n  const value = clean(estado) || 'Sin dato';\n  return norm(value) === 'en proceso' ? 'Stock' : value;\n}\n\n\nfunction renderBars(items) {\n  const box = $('predioBars');\n  if (!items.length) {\n    box.innerHTML = '<div class=\"estado-empty\">No hay predios para los filtros seleccionados.<\/div>';\n    return;\n  }\n  const max = items[0][1] || 1;\n  box.innerHTML = items.map(([name, value], index) =>\n    '<div class=\"bar-row\"><div class=\"bar-name\" title=\"'+escapeHtml(name)+'\">'+escapeHtml(name)+'<\/div>' +\n    '<div class=\"bar-track\"><i style=\"width:'+Math.max(2, value / max * 100)+'%;background:'+colors[index % colors.length]+'\"><\/i><\/div>' +\n    '<div class=\"bar-value\">'+formatNum(value, state.maps.volumen ? 2 : 0)+'<\/div><\/div>'\n  ).join('');\n}\n\nfunction renderEstadoMatrix(items) {\n  const box = $('estadoMatrix');\n  if (!state.maps.estado) {\n    box.innerHTML = '<div class=\"estado-empty\">No se detectó una columna de estado.<\/div>';\n    return;\n  }\n\n  const groups = new Map();\n  for (const item of items) {\n    const name = estadoParaMatriz(item.estado);\n    const current = groups.get(name) || { count:0, volume:0 };\n    current.count++;\n    if (item.hasVolumen) current.volume += item.volumen;\n    groups.set(name, current);\n  }\n\n  const data = [...groups.entries()].sort((a, b) => sortEstados(a[0], b[0]));\n  if (!data.length) {\n    box.innerHTML = '<div class=\"estado-empty\">No hay estados para los filtros seleccionados.<\/div>';\n    return;\n  }\n\n  const total = items.length || 1;\n  box.innerHTML = data.map(([name, item], index) => {\n    const percentage = item.count / total * 100;\n    const color = colorByEstado(name);\n    const volume = state.maps.volumen\n      ? '<div class=\"estado-metric\"><span>'+escapeHtml(state.maps.volumen)+'<\/span><strong>'+formatNum(item.volume, 2)+'<\/strong><\/div>'\n      : '';\n    return '<article class=\"estado-item\" style=\"border-left-color:'+color+'\">' +\n      '<div class=\"estado-name\" title=\"'+escapeHtml(name)+'\">'+escapeHtml(name)+'<\/div>' +\n      '<div class=\"estado-metrics\"><div class=\"estado-metric\"><span>Pilas<\/span><strong>'+formatNum(item.count)+'<\/strong><\/div>'+volume+\n      '<div class=\"estado-metric\"><span>Participación<\/span><strong>'+formatNum(percentage,1)+'%<\/strong><\/div><\/div>' +\n      '<div class=\"estado-bar\"><i style=\"width:'+percentage+'%;background:'+color+'\"><\/i><\/div><\/article>';\n  }).join('');\n}\n\nfunction estadoOrder(name) {\n  const order = { 'stock': 1, 'cerrada': 2 };\n  return order[norm(name)] ?? 99;\n}\n\nfunction sortEstados(a, b) {\n  const diff = estadoOrder(a) - estadoOrder(b);\n  return diff || a.localeCompare(b, 'es');\n}\n\nfunction renderProductoEstadoMatrix(items) {\n  const wrap = $('productoMatrixWrap');\n  const head = $('productoMatrixHead');\n  const body = $('productoMatrixBody');\n  const empty = $('productoMatrixEmpty');\n  const info = $('productoMatrixInfo');\n\n  if (!state.maps.producto || !state.maps.estado) {\n    head.innerHTML = '';\n    body.innerHTML = '';\n    empty.classList.remove('hidden');\n    wrap.classList.add('hidden');\n    info.textContent = 'Requiere columnas Producto y Estado';\n    return;\n  }\n\n  const estados = [...new Set(items.map(item => estadoParaMatriz(item.estado)))].sort(sortEstados);\n  const productos = new Map();\n\n  for (const item of items) {\n    const producto = item.producto || 'Sin dato';\n    const estado = estadoParaMatriz(item.estado);\n    const row = productos.get(producto) || new Map();\n    const current = row.get(estado) || { count: 0, volume: 0 };\n    current.count++;\n    if (item.hasVolumen) current.volume += item.volumen;\n    row.set(estado, current);\n    productos.set(producto, row);\n  }\n\n  if (!productos.size || !estados.length) {\n    head.innerHTML = '';\n    body.innerHTML = '';\n    empty.classList.remove('hidden');\n    wrap.classList.add('hidden');\n    info.textContent = 'Sin datos para los filtros seleccionados';\n    return;\n  }\n\n  const data = [...productos.entries()].sort((a, b) => {\n    const av = [...a[1].values()].reduce((sum, x) => sum + x.volume, 0);\n    const bv = [...b[1].values()].reduce((sum, x) => sum + x.volume, 0);\n    return bv - av || a[0].localeCompare(b[0], 'es');\n  });\n\n  const showVolume = !!state.maps.volumen;\n  const volumenLabel = state.maps.volumen || 'M3';\n  head.innerHTML = '<tr><th>Producto<\/th>' + estados.map(estado => '<th>'+escapeHtml(estado)+'<\/th>').join('') + '<th>Total<\/th><\/tr>';\n\n  const totals = new Map(estados.map(estado => [estado, { count: 0, volume: 0 }]));\n  let totalCount = 0, totalVolume = 0;\n\n  body.innerHTML = data.map(([producto, byEstado]) => {\n    let productCount = 0, productVolume = 0;\n    const cells = estados.map(estado => {\n      const value = byEstado.get(estado);\n      if (!value) return '<td class=\"cell-empty\">—<\/td>';\n      productCount += value.count;\n      productVolume += value.volume;\n      const total = totals.get(estado);\n      total.count += value.count;\n      total.volume += value.volume;\n      return '<td><span class=\"cell-volume\">'+(showVolume ? formatNum(value.volume, 2) : formatNum(value.count))+'<\/span><span class=\"cell-count\">'+formatNum(value.count)+' pilas<\/span><\/td>';\n    }).join('');\n    totalCount += productCount;\n    totalVolume += productVolume;\n    const totalValue = showVolume ? formatNum(productVolume, 2) : formatNum(productCount);\n    return '<tr><td title=\"'+escapeHtml(producto)+'\">'+escapeHtml(producto)+'<\/td>'+cells+'<td class=\"total-cell\"><span class=\"cell-volume\">'+totalValue+'<\/span><span class=\"cell-count\">'+formatNum(productCount)+' pilas<\/span><\/td><\/tr>';\n  }).join('') + '<tr><td class=\"total-cell\">Total<\/td>' + estados.map(estado => {\n    const value = totals.get(estado);\n    return '<td class=\"total-cell\"><span class=\"cell-volume\">'+(showVolume ? formatNum(value.volume, 2) : formatNum(value.count))+'<\/span><span class=\"cell-count\">'+formatNum(value.count)+' pilas<\/span><\/td>';\n  }).join('') + '<td class=\"total-cell\"><span class=\"cell-volume\">'+(showVolume ? formatNum(totalVolume, 2) : formatNum(totalCount))+'<\/span><span class=\"cell-count\">'+formatNum(totalCount)+' pilas<\/span><\/td><\/tr>';\n\n  empty.classList.add('hidden');\n  wrap.classList.remove('hidden');\n  info.textContent = showVolume ? volumenLabel + ' y cantidad de pilas' : 'Cantidad de pilas';\n}\n\nconst COLUMNA_DIAS_CREACION = '__dias_desde_creacion__';\n\nfunction tableColumns() {\n  /* Orden fijo para el detalle operativo:\n     PILA, ESTADO, PREDIO, PRODUCTO y luego el resto de campos útiles. */\n  const preferred = [\n    state.maps.id,\n    state.maps.estado,\n    state.maps.predio,\n    state.maps.producto,\n    state.maps.volumen,\n    state.maps.fecha,\n    COLUMNA_DIAS_CREACION,\n    state.maps.contratista,\n    state.maps.monte\n  ];\n\n  const excluded = new Set([\n    'activo', 'lat', 'latitud', 'long', 'lng', 'lon', 'longitud', 'longitude',\n    'cosecha'\n  ]);\n\n  return [...new Set([...preferred, ...state.columns].filter(Boolean))]\n    .filter(column => !excluded.has(norm(column)))\n    .slice(0, MAX_TABLE_COLUMNS);\n}\n\nfunction diasDesdeCreacion(fecha) {\n  if (!fecha || Number.isNaN(+fecha)) return null;\n  const hoy = new Date();\n  const inicioHoy = new Date(hoy.getFullYear(), hoy.getMonth(), hoy.getDate());\n  const inicioCreacion = new Date(fecha.getFullYear(), fecha.getMonth(), fecha.getDate());\n  return Math.max(0, Math.floor((inicioHoy - inicioCreacion) / 86400000));\n}\n\nfunction etiquetaColumnaDetalle(column) {\n  return column === COLUMNA_DIAS_CREACION ? 'Hoy - día de creación' : column;\n}\n\nfunction renderTable() {\n  /* Detalle operativo: primero PREDIO de A a Z.\n     Dentro de cada predio, número de PILA de menor a mayor. */\n  const items = [...state.visible].sort((a, b) => {\n    const predioCompare = (a.predio || 'Sin dato').localeCompare(b.predio || 'Sin dato', 'es', {\n      numeric: true,\n      sensitivity: 'base'\n    });\n    if (predioCompare !== 0) return predioCompare;\n\n    const aHasNumber = Number.isFinite(a.idNumber);\n    const bHasNumber = Number.isFinite(b.idNumber);\n    if (aHasNumber && bHasNumber) return a.idNumber - b.idNumber;\n    if (aHasNumber) return -1;\n    if (bHasNumber) return 1;\n    return (a.idRaw || '').localeCompare(b.idRaw || '', 'es', { numeric: true, sensitivity: 'base' });\n  });\n  const columns = tableColumns();\n  const limit = Math.min(state.shown, items.length);\n\n  $('tableHead').innerHTML = '<tr>'+columns.map(column => '<th>'+escapeHtml(etiquetaColumnaDetalle(column))+'<\/th>').join('')+'<\/tr>';\n\n  let html = '';\n  for (let i = 0; i < limit; i++) {\n    const item = items[i], row = item.row;\n    html += '<tr>';\n    for (const column of columns) {\n      let value = row[column];\n      if (column === COLUMNA_DIAS_CREACION) {\n        const dias = diasDesdeCreacion(item.fecha);\n        value = dias === null ? '—' : formatNum(dias) + (dias === 1 ? ' día' : ' días');\n      } else if (column === state.maps.volumen) {\n        value = item.hasVolumen ? formatNum(item.volumen,2) : clean(value);\n      } else if (column === state.maps.fecha) {\n        value = formatDate(item.fecha);\n      } else {\n        value = clean(value);\n      }\n      if (column === state.maps.estado && value) {\n        const statusClass = /cerr|final|alert|venc|error/i.test(value) ? 'danger' :\n          /pend|stock|abier/i.test(value) ? 'warn' : '';\n        value = '<span class=\"pill '+statusClass+'\">'+escapeHtml(value)+'<\/span>';\n      } else {\n        value = escapeHtml(value || '—');\n      }\n      html += '<td>'+value+'<\/td>';\n    }\n    html += '<\/tr>';\n  }\n\n  $('tableBody').innerHTML = html;\n  $('empty').classList.toggle('hidden', items.length > 0);\n  $('moreBtn').classList.toggle('hidden', limit >= items.length);\n}\n\n\nfunction colorByEstado(estado) {\n  const key = norm(estado);\n  if (key === 'cerrada') return '#ef4444';      // rojo\n  if (key === 'stock') return '#22c55e';        // verde\n  if (key === 'en proceso') return '#facc15';   // amarillo\n  return '#9075ef';\n}\n\nfunction loadScript(src) {\n  return new Promise((resolve, reject) => {\n    const existing = [...document.scripts].find(script => script.src === src);\n    if (existing && existing.dataset.loaded === '1') return resolve();\n    const script = document.createElement('script');\n    script.src = src;\n    script.async = true;\n    script.onload = () => { script.dataset.loaded = '1'; resolve(); };\n    script.onerror = () => reject(new Error('No se pudo cargar ' + src));\n    document.head.appendChild(script);\n  });\n}\n\nfunction loadCss(href) {\n  if ([...document.styleSheets].some(sheet => sheet.href === href)) return;\n  const link = document.createElement('link');\n  link.rel = 'stylesheet';\n  link.href = href;\n  document.head.appendChild(link);\n}\n\nfunction loadLeaflet() {\n  if (window.L) return Promise.resolve(window.L);\n  if (mapLibraryPromise) return mapLibraryPromise;\n\n  const sources = [\n    {\n      css: 'https://unpkg.com/leaflet@1.9.4/dist/leaflet.css',\n      js: 'https://unpkg.com/leaflet@1.9.4/dist/leaflet.js'\n    },\n    {\n      css: 'https://cdn.jsdelivr.net/npm/leaflet@1.9.4/dist/leaflet.css',\n      js: 'https://cdn.jsdelivr.net/npm/leaflet@1.9.4/dist/leaflet.js'\n    }\n  ];\n\n  mapLibraryPromise = (async () => {\n    let lastError = null;\n    for (const source of sources) {\n      try {\n        loadCss(source.css);\n        await loadScript(source.js);\n        if (window.L) return window.L;\n      } catch (error) {\n        lastError = error;\n      }\n    }\n    throw lastError || new Error('Leaflet no quedó disponible.');\n  })();\n\n  return mapLibraryPromise;\n}\n\nfunction createMarkerIcon(estado) {\n  const color = colorByEstado(estado);\n  return L.divIcon({\n    className: '',\n    html: '<div class=\"pile-marker\" style=\"background:'+color+'\"><\/div>',\n    iconSize: [15, 15],\n    iconAnchor: [8, 8],\n    popupAnchor: [0, -8]\n  });\n}\n\nfunction markerPopup(item) {\n  return '<div class=\"map-popup\">' +\n    '<strong>Pila ' + escapeHtml(item.idRaw || '—') + '<\/strong>' +\n    'Estado: ' + escapeHtml(item.estado || '—') + '<br>' +\n    'Predio: ' + escapeHtml(item.predio || '—') + '<br>' +\n    'Producto: ' + escapeHtml(item.producto || '—') + '<br>' +\n    escapeHtml(state.maps.volumen || 'M3') + ': ' + escapeHtml(formatNum(item.volumen, 2)) + '<br>' +\n    'LAT: ' + escapeHtml(item.lat.toFixed(8)) + '<br>' +\n    'LONG: ' + escapeHtml(item.lng.toFixed(8)) +\n  '<\/div>';\n}\n\nfunction setMapMessage(message) {\n  const empty = $('mapEmpty');\n  if (!empty) return;\n  empty.textContent = message;\n  empty.classList.remove('hidden');\n}\n\nfunction hideMapMessage() {\n  const empty = $('mapEmpty');\n  if (empty) empty.classList.add('hidden');\n}\n\n\nfunction setSelectionInfo(message) {\n  const info = $('selectionInfo');\n  if (info) info.textContent = message;\n}\n\nfunction setSelectionMode(active) {\n  mapSelection.active = active;\n  mapSelection.drawing = false;\n  mapSelection.start = null;\n\n  const btn = $('selectZoneBtn');\n  if (btn) {\n    btn.classList.toggle('active', active);\n    btn.textContent = active ? 'Tocá punto 1...' : 'Seleccionar 2 puntos';\n  }\n\n  if (pilasMap) {\n    const container = pilasMap.getContainer();\n    if (container) container.classList.toggle('selecting-zone', active);\n\n    if (active) {\n      pilasMap.dragging.disable();\n      if (pilasMap.touchZoom) pilasMap.touchZoom.disable();\n      if (pilasMap.doubleClickZoom) pilasMap.doubleClickZoom.disable();\n      if (pilasMap.boxZoom) pilasMap.boxZoom.disable();\n      if (mapSelection.rectangle) pilasMap.removeLayer(mapSelection.rectangle);\n      if (mapSelection.cornerMarker) pilasMap.removeLayer(mapSelection.cornerMarker);\n      mapSelection.rectangle = null;\n      mapSelection.cornerMarker = null;\n      setSelectionInfo('Tocá la primera esquina del marco. Luego tocá la esquina opuesta para calcular la suma de M3.');\n    } else {\n      pilasMap.dragging.enable();\n      if (pilasMap.touchZoom) pilasMap.touchZoom.enable();\n      if (pilasMap.doubleClickZoom) pilasMap.doubleClickZoom.enable();\n      if (pilasMap.boxZoom) pilasMap.boxZoom.enable();\n    }\n  }\n}\n\nfunction clearMapSelection(message) {\n  if (mapSelection.rectangle && pilasMap) {\n    pilasMap.removeLayer(mapSelection.rectangle);\n  }\n  if (mapSelection.cornerMarker && pilasMap) {\n    pilasMap.removeLayer(mapSelection.cornerMarker);\n  }\n  mapSelection.rectangle = null;\n  mapSelection.cornerMarker = null;\n  mapSelection.start = null;\n  mapSelection.drawing = false;\n  setSelectionMode(false);\n  setSelectionInfo(message || 'Presioná “Seleccionar 2 puntos”, tocá una esquina del área y después la esquina opuesta para sumar M3.');\n}\n\nfunction summarizeMapSelection(bounds) {\n  const selected = mapSelection.points.filter(item => bounds.contains([item.lat, item.lng]));\n  if (!selected.length) {\n    setSelectionInfo('Selección: 0 pilas · M3 total: 0,00');\n    return;\n  }\n\n  const volumeLabel = state.maps.volumen || 'M3';\n  const totalM3 = selected.reduce((acc, item) => acc + (item.hasVolumen ? item.volumen : 0), 0);\n  const predios = new Set(selected.map(item => item.predio || 'Sin dato'));\n  const estados = new Map();\n\n  for (const item of selected) {\n    const estado = item.estado || 'Sin dato';\n    estados.set(estado, (estados.get(estado) || 0) + (item.hasVolumen ? item.volumen : 0));\n  }\n\n  const estadosTxt = [...estados.entries()]\n    .sort((a,b) => b[1] - a[1])\n    .slice(0, 3)\n    .map(([estado, valor]) => estado + ': ' + formatNum(valor, 2))\n    .join(' · ');\n\n  setSelectionInfo(\n    'Selección: ' + formatNum(selected.length) + ' pilas · ' +\n    volumeLabel + ' total: ' + formatNum(totalM3, 2) + ' · ' +\n    'Predios: ' + formatNum(predios.size) +\n    (estadosTxt ? ' · ' + estadosTxt : '')\n  );\n}\n\nfunction finishTwoPointSelection(endLatLng) {\n  if (!mapSelection.start || !pilasMap) return;\n\n  const bounds = L.latLngBounds(mapSelection.start, endLatLng);\n\n  if (mapSelection.rectangle) pilasMap.removeLayer(mapSelection.rectangle);\n  mapSelection.rectangle = L.rectangle(bounds, {\n    color: '#39b6a4',\n    weight: 2,\n    fillColor: '#39b6a4',\n    fillOpacity: 0.15,\n    dashArray: '6,4'\n  }).addTo(pilasMap);\n\n  if (mapSelection.cornerMarker) {\n    pilasMap.removeLayer(mapSelection.cornerMarker);\n    mapSelection.cornerMarker = null;\n  }\n\n  setSelectionMode(false);\n  summarizeMapSelection(bounds);\n}\n\nfunction initMapSelectionHandlers() {\n  if (!pilasMap || pilasMap._selectionHandlersReady) return;\n  pilasMap._selectionHandlersReady = true;\n\n  pilasMap.on('click', event => {\n    if (!mapSelection.active) return;\n\n    if (!mapSelection.start) {\n      mapSelection.start = event.latlng;\n      if (mapSelection.cornerMarker) pilasMap.removeLayer(mapSelection.cornerMarker);\n      mapSelection.cornerMarker = L.circleMarker(event.latlng, {\n        radius: 7,\n        color: '#39b6a4',\n        weight: 2,\n        fillColor: '#39b6a4',\n        fillOpacity: 0.85\n      }).addTo(pilasMap);\n\n      const btn = $('selectZoneBtn');\n      if (btn) btn.textContent = 'Tocá punto 2...';\n      setSelectionInfo('Primer punto marcado. Ahora tocá la esquina opuesta del marco.');\n      return;\n    }\n\n    finishTwoPointSelection(event.latlng);\n  });\n}\n\nasync function renderPileMap(items) {\n  const mapDiv = $('leafletMap');\n  const info = $('mapInfo');\n  if (!mapDiv) return;\n\n  const points = items.filter(item => item.hasCoordinates);\n  mapSelection.points = points;\n  if (mapSelection.rectangle) clearMapSelection();\n  if (!points.length) {\n    if (info) info.textContent = 'Sin coordenadas válidas';\n    setMapMessage('No hay coordenadas válidas para los filtros seleccionados.');\n    if (pilasMarkers) pilasMarkers.clearLayers();\n    clearMapSelection('Sin coordenadas válidas para seleccionar.');\n    return;\n  }\n\n  if (info) info.textContent = formatNum(points.length) + ' pilas georreferenciadas';\n  setMapMessage('Cargando mapa interactivo...');\n\n  try {\n    await loadLeaflet();\n\n    if (!pilasMap) {\n      pilasMap = L.map(mapDiv, {\n        preferCanvas: true,\n        zoomControl: true,\n        scrollWheelZoom: true,\n        attributionControl: false\n      });\n\n      const normalLayer = L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {\n        maxZoom: 19,\n        attribution: ''\n      });\n\n      const topoLayer = L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Topo_Map/MapServer/tile/{z}/{y}/{x}', {\n        maxZoom: 19,\n        attribution: ''\n      });\n\n      const satelliteLayer = L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', {\n        maxZoom: 19,\n        attribution: ''\n      });\n\n      /* Capas de referencia para ver rutas, caminos y nombres sobre el mapa. */\n      const roadsLayer = L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/Reference/World_Transportation/MapServer/tile/{z}/{y}/{x}', {\n        maxZoom: 19,\n        attribution: ''\n      });\n\n      const placesLayer = L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/Reference/World_Boundaries_and_Places/MapServer/tile/{z}/{y}/{x}', {\n        maxZoom: 19,\n        attribution: ''\n      });\n\n      normalLayer.addTo(pilasMap);\n      roadsLayer.addTo(pilasMap);\n      placesLayer.addTo(pilasMap);\n\n      L.control.layers(\n        {\n          'Mapa con rutas': normalLayer,\n          'Topográfico': topoLayer,\n          'Satélite': satelliteLayer\n        },\n        {\n          'Rutas y caminos': roadsLayer,\n          'Nombres de lugares': placesLayer\n        },\n        { collapsed: true }\n      ).addTo(pilasMap);\n      pilasMarkers = L.layerGroup().addTo(pilasMap);\n      pilasMap.setView(URUGUAY_CENTER, 7);\n      initMapSelectionHandlers();\n    }\n\n    hideMapMessage();\n    pilasMarkers.clearLayers();\n\n    const bounds = [];\n    for (const item of points) {\n      const marker = L.marker([item.lat, item.lng], { icon: createMarkerIcon(item.estado), title: 'Pila ' + (item.idRaw || '') });\n      marker.bindPopup(markerPopup(item));\n      marker.addTo(pilasMarkers);\n      bounds.push([item.lat, item.lng]);\n    }\n\n    setTimeout(() => {\n      pilasMap.invalidateSize();\n      /* Mantiene la vista centrada en Uruguay y muestra el país como contexto. */\n      pilasMap.fitBounds(URUGUAY_BOUNDS, { padding: [24, 24] });\n    }, 80);\n\n  } catch (error) {\n    console.error(error);\n    if (info) info.textContent = 'No se pudo cargar Leaflet';\n    setMapMessage('No se pudo cargar el mapa interactivo. Verificá conexión a Internet o que la red no bloquee Leaflet/OpenStreetMap.');\n  }\n}\n\nfunction render() {\n  const items = getVisibleItems();\n  state.visible = items;\n\n  const predios = new Set();\n  const byPredio = new Map();\n  let totalVolumen = 0;\n\n  for (const item of items) {\n    if (item.predio) predios.add(item.predio);\n    const key = item.predio || 'Sin dato';\n    const amount = state.maps.volumen ? item.volumen : 1;\n    byPredio.set(key, (byPredio.get(key) || 0) + amount);\n    if (item.hasVolumen) totalVolumen += item.volumen;\n\n  }\n\n  $('kpiPilas').textContent = formatNum(items.length);\n  $('volumeLabel').textContent = state.maps.volumen || 'Volumen / Stock';\n  $('kpiVolumen').textContent = state.maps.volumen ? formatNum(totalVolumen,2) : '—';\n  const volumenNote = $('kpiVolumenNote');\n  if (volumenNote) volumenNote.textContent = '';\n  $('kpiPredios').textContent = formatNum(predios.size);\n  renderBars([...byPredio.entries()].sort((a,b)=>b[1]-a[1]));\n  renderEstadoMatrix(items);\n  renderProductoEstadoMatrix(items);\n  renderTable();\n  renderPileMap(items);\n}\n\nfunction extractRows(payload) {\n  const source = Array.isArray(payload) ? payload : payload?.datos;\n  if (!Array.isArray(source) || !source.length) throw new Error('El JSON no contiene registros en “datos”.');\n  return source.filter(row => row && typeof row === 'object');\n}\n\nfunction loadPayload(payload) {\n  const rows = extractRows(payload);\n  const columns = Array.isArray(payload?.columnas) && payload.columnas.length\n    ? payload.columnas.map(clean).filter(Boolean)\n    : [...new Set(rows.flatMap(row => Object.keys(row)))];\n\n  if (!columns.length) throw new Error('El JSON no contiene columnas válidas.');\n\n  state.rows = rows;\n  state.columns = columns;\n  state.maps = detectMaps(columns);\n\n  /* Separado del render para que el navegador pueda pintar “Procesando...” antes del bucle. */\n  requestAnimationFrame(() => {\n    state.items = prepareItems(rows);\n    state.shown = TABLE_STEP;\n    buildFilters();\n    render();\n\n    const origin = payload?.actualizado ? formatDate(parseDate(payload.actualizado)) : '';\n    $('loadedAt').textContent = new Intl.DateTimeFormat('es-UY', {dateStyle:'medium',timeStyle:'short'}).format(new Date());\n    setStatus('Actualizado: '+formatNum(rows.length)+' registros sincronizados'+(origin ? ' · origen: '+origin : '')+'.');\n  });\n}\n\nasync function showCached() {\n  if (!('caches' in window)) return false;\n  try {\n    const cache = await caches.open(CACHE_NAME);\n    const cached = await cache.match(DROPBOX_URL);\n    if (!cached) return false;\n    setStatus('Mostrando última copia disponible...');\n    loadPayload(await cached.json());\n    return true;\n  } catch {\n    return false;\n  }\n}\n\nasync function fetchFresh() {\n  /*\n     Primero se lee el JSON. La caché es opcional: algunos navegadores bloquean\n     Cache Storage cuando el archivo HTML se abre directamente desde Windows.\n     En ese caso NO debe impedir la lectura desde Dropbox.\n  */\n  const response = await fetch(DROPBOX_URL, { cache: 'no-cache' });\n  if (!response.ok) throw new Error('Dropbox respondió HTTP ' + response.status + '.');\n\n  const payload = await response.json();\n\n  if ('caches' in window) {\n    try {\n      const cache = await caches.open(CACHE_NAME);\n      await cache.put(DROPBOX_URL, new Response(JSON.stringify(payload), {\n        headers: { 'Content-Type': 'application/json' }\n      }));\n    } catch (cacheError) {\n      /* La carga principal continúa aunque el navegador no permita usar caché. */\n      console.warn('No fue posible guardar la copia local:', cacheError);\n    }\n  }\n\n  return payload;\n}\n\nasync function sync(showMessage = true) {\n  if (showMessage) setStatus('Sincronizando datos...');\n  try {\n    const payload = await fetchFresh();\n    setStatus('Procesando datos...');\n    loadPayload(payload);\n  } catch (error) {\n    console.error(error);\n    setStatus(state.items.length ? 'Se mantiene la última copia cargada. No se pudo sincronizar.' :\n      'No fue posible leer el JSON desde Dropbox.', true);\n  }\n}\n\nfunction parseCsv(text) {\n  const output = []; let row = [], cell = '', quoted = false;\n  for (let i=0; i<text.length; i++) {\n    const char = text[i], next = text[i+1];\n    if (char === '\"') { if (quoted && next === '\"') { cell+='\"'; i++; } else quoted = !quoted; }\n    else if (char === ';' && !quoted) { row.push(cell); cell=''; }\n    else if ((char === '\\n' || char === '\\r') && !quoted) {\n      if (char === '\\r' && next === '\\n') i++;\n      row.push(cell); cell='';\n      if (row.some(value=>clean(value))) output.push(row);\n      row=[];\n    } else cell += char;\n  }\n  row.push(cell);\n  if (row.some(value=>clean(value))) output.push(row);\n  return output;\n}\n\n$('reloadBtn').addEventListener('click', () => sync(true));\n$('predioFilter').addEventListener('change', () => { state.shown=TABLE_STEP; render(); });\n$('estadoFilter').addEventListener('change', () => { state.shown=TABLE_STEP; render(); });\n$('moreBtn').addEventListener('click', () => { state.shown += TABLE_STEP; renderTable(); });\n$('selectZoneBtn').addEventListener('click', () => {\n  if (!pilasMap) {\n    setSelectionInfo('Esperá a que cargue el mapa para seleccionar una zona.');\n    return;\n  }\n  setSelectionMode(!mapSelection.active);\n});\n$('clearZoneBtn').addEventListener('click', () => clearMapSelection());\n$('localFile').addEventListener('change', async event => {\n  const file = event.target.files[0];\n  if (!file) return;\n  try {\n    setStatus('Procesando archivo local...');\n    if (/\\.json$/i.test(file.name)) loadPayload(JSON.parse(await file.text()));\n    else {\n      const matrix = parseCsv(await file.text());\n      const columns = matrix[0].map(clean);\n      const datos = matrix.slice(1).map(row => Object.fromEntries(columns.map((column,index)=>[column,row[index] ?? ''])));\n      loadPayload({columnas:columns,datos});\n    }\n  } catch (error) {\n    console.error(error);\n    setStatus('No se pudo interpretar el archivo seleccionado.', true);\n  }\n});\n\n/* Cache inmediata y actualización en segundo plano. */\n(async () => {\n  const cached = await showCached();\n  sync(!cached);\n})();\n<\/script>\n\n<\/body>\n<\/html>\n";
 
-const JSON_URL = 'https://dl.dropbox.com/scl/fi/kud6q42l7ayvrm3tkje4c/RECIBO-RESUMENES.json?rlkey=a9hv1g2x14t91al141ado7owh&dl=1';
-const FECHA_MINIMA = new Date(2025, 0, 1);
-const LIMITE_TABLA = 500;
+function cargarIframePilas(){
+  document.querySelectorAll('.pilas-embed').forEach(iframe=>{
+    if(!iframe.dataset.loaded){
+      iframe.srcdoc = PILAS_ONLINE_HTML;
+      iframe.dataset.loaded = '1';
+    }
+  });
+}
 
-const MESES = ['Enero','Febrero','Marzo','Abril','Mayo','Junio','Julio','Agosto','Septiembre','Octubre','Noviembre','Diciembre'];
-const ALIAS = {
-  fecha: ['FechaRto'],
-  anio: ['Año'],
-  mes: ['Mes'],
-  deposito: ['Depósito'],
-  origen: ['Origen'],
-  contrato: ['CONTRATO'],
-  monte: ['Monte'],
-  matricula: ['Matricula'],
-  neto: ['Neto'],
-  remito: ['Remito'],
-  producto: ['NombreProd2'],
-  empresa: ['NombreEmpresa'],
-  fletero: ['Nombre Fletero'],
-  semana: ['Semana'],
-  barco: ['Barco'],
-  bdmt: ['bdmt'],
-  toneladas: ['toneladas'],
-  tipoRemito: ['Tipo Remito'],
-  rtoOrigen: ['RtoOrigen'],
-  metrosCubicos: ['Metros Cubicos']
+const SHEET = 'RESUMEN';
+const RANGES = {
+  saldos: 'A5:D11',              // Monte / MCS cargados / MCS en monte / saldo estimado
+  produccion: 'G5:J15',          // Producción diaria BDMT
+  stocks: 'K5:N23',              // Resumen stocks planta FRIMOSA
+  rolesDiario: 'A30:E38',
+  rolesSemanal: 'F30:J42',          // Incluye número de semana + métricas
+  rolesMensual: 'K30:M42',
+  trozasDiario: 'A52:B60',
+  trozasSemanal: 'F52:H64',         // Incluye número de semana + métricas
+  trozasMensual: 'K52:L64',
+  contratoFull: 'A161:J224'
 };
-
-let datosOriginales = [];
-let datosFiltrados = [];
-let campos = {};
-let graficoMes = null;
-let graficoDeposito = null;
-let graficoProductoMes = null;
-let textoActualizacion = '';
-let columnasFuente = [];
-let filasCorregidas = 0;
-let filasDescartadas = 0;
-
-const normalizar = v => String(v ?? '').normalize('NFD').replace(/[\u0300-\u036f]/g,'').trim().toLowerCase();
-
-function encontrarIndice(columnas, alias) {
-  const mapa = new Map(columnas.map((nombre, indice) => [normalizar(nombre), indice]));
-  for (const candidato of alias) {
-    const indice = mapa.get(normalizar(candidato));
-    if (indice !== undefined) return indice;
+function esFecha(valor){
+  if(valor instanceof Date && !isNaN(valor)) return true;
+  if(typeof valor === 'string'){
+    const t = valor.trim();
+    if(t.includes('GMT')) return true;
+    if(/^\d{4}-\d{2}-\d{2}/.test(t)) return true;
+    if(/^\d{1,2}\/\d{1,2}\/\d{4}$/.test(t)) return true;
   }
-  return null;
+  return false;
 }
+function convertirFecha(valor){
+  if(valor instanceof Date) return valor;
 
-function extraerLista(json) {
-  if (Array.isArray(json)) return json;
-  if (!json || typeof json !== 'object') return [];
-  for (const key of ['datos','data','registros','records','items','value']) {
-    if (Array.isArray(json[key])) return json[key];
-  }
-  const lista = Object.values(json).find(Array.isArray);
-  return lista || [];
-}
+  if(typeof valor === 'string'){
+    const texto = valor.trim();
 
-function normalizarFila(fila, cantidadColumnas, indiceAnio) {
-  if (!Array.isArray(fila)) {
-    filasDescartadas++;
-    return null;
-  }
+    // Las fechas ISO (YYYY-MM-DD) se interpretan como UTC con new Date(),
+    // lo que puede restar un día en Uruguay y desplazar enero a diciembre.
+    // Se construyen en hora local para conservar exactamente el día y el mes de Excel.
+    const iso = texto.match(/^(\d{4})-(\d{2})-(\d{2})(?:[T ].*)?$/);
+    if(iso){
+      return new Date(Number(iso[1]), Number(iso[2]) - 1, Number(iso[3]));
+    }
 
-  // Caso normal: la fila tiene exactamente la misma cantidad de valores
-  // que el arreglo "columnas" del JSON.
-  if (fila.length === cantidadColumnas) return fila;
-
-  // Compatibilidad con versiones anteriores que incluían IdTrans al inicio,
-  // aunque el JSON actual comienza directamente por Año.
-  if (fila.length === cantidadColumnas + 1 && indiceAnio === 0) {
-    const posibleAnioActual = Number(fila[0]);
-    const posibleAnioDesplazado = Number(fila[1]);
-    const primeroPareceAnio = posibleAnioActual >= 1900 && posibleAnioActual <= 2100;
-    const segundoPareceAnio = posibleAnioDesplazado >= 1900 && posibleAnioDesplazado <= 2100;
-    if (!primeroPareceAnio && segundoPareceAnio) {
-      filasCorregidas++;
-      return fila.slice(1);
+    if(/^\d{1,2}\/\d{1,2}\/\d{4}$/.test(texto)){
+      const [dd,mm,yyyy] = texto.split('/').map(Number);
+      return new Date(yyyy, mm-1, dd);
     }
   }
 
-  // Si faltan valores al final, completa con blancos sin desplazar columnas.
-  if (fila.length < cantidadColumnas) {
-    filasCorregidas++;
-    return fila.concat(Array(cantidadColumnas - fila.length).fill(''));
-  }
-
-  // Si sobran valores al final, conserva únicamente las columnas declaradas.
-  if (fila.length > cantidadColumnas) {
-    filasCorregidas++;
-    return fila.slice(0, cantidadColumnas);
-  }
-
-  filasDescartadas++;
-  return null;
+  return new Date(valor);
+}
+function formatearFechaTitulo(valor){
+  const d = convertirFecha(valor);
+  if(isNaN(d)) return valor;
+  const dias = ['Domingo','Lunes','Martes','Miércoles','Jueves','Viernes','Sábado'];
+  const meses = ['enero','febrero','marzo','abril','mayo','junio','julio','agosto','septiembre','octubre','noviembre','diciembre'];
+  return `${dias[d.getDay()]} ${d.getDate()} de ${meses[d.getMonth()]} de ${d.getFullYear()}`;
+}
+function formatearFechaCorta(valor){
+  const d = convertirFecha(valor);
+  if(isNaN(d)) return valor;
+  const meses = ['Ene','Feb','Mar','Abr','May','Jun','Jul','Ago','Sep','Oct','Nov','Dic'];
+  return `${String(d.getDate()).padStart(2,'0')}-${meses[d.getMonth()]}`;
+}
+function formatearFechaCortaAnio(valor){
+  const d = convertirFecha(valor);
+  if(isNaN(d)) return valor;
+  const meses = ['Ene','Feb','Mar','Abr','May','Jun','Jul','Ago','Sep','Oct','Nov','Dic'];
+  return `${String(d.getDate()).padStart(2,'0')}-${meses[d.getMonth()]}-${d.getFullYear()}`;
+}
+function formatearMesAnio(valor){
+  const d = convertirFecha(valor);
+  if(isNaN(d)) return valor;
+  const meses = ['Enero','Febrero','Marzo','Abril','Mayo','Junio','Julio','Agosto','Septiembre','Octubre','Noviembre','Diciembre'];
+  return `${meses[d.getMonth()]} ${d.getFullYear()}`;
 }
 
-function parseFecha(valor) {
-  if (valor === null || valor === undefined || valor === '') return null;
-  if (valor instanceof Date && !isNaN(valor)) return valor;
-
-  // Las fechas del JSON provienen de Excel, por ejemplo 39448 = 01/01/2008.
-  // Se convierten a una fecha LOCAL para evitar que la zona horaria reste un día.
-  if (typeof valor === 'number' && Number.isFinite(valor)) {
-    const dias = Math.floor(valor);
-    const fraccion = valor - dias;
-    const baseUTC = Date.UTC(1899, 11, 30);
-    const temporalUTC = new Date(baseUTC + dias * 86400000);
-
-    const totalSegundos = Math.round(fraccion * 86400);
-    const horas = Math.floor(totalSegundos / 3600);
-    const minutos = Math.floor((totalSegundos % 3600) / 60);
-    const segundos = totalSegundos % 60;
-
-    const d = new Date(
-      temporalUTC.getUTCFullYear(),
-      temporalUTC.getUTCMonth(),
-      temporalUTC.getUTCDate(),
-      horas,
-      minutos,
-      segundos
-    );
-    return isNaN(d) ? null : d;
-  }
-
-  const s = String(valor).trim();
-  let m = s.match(/^(\d{1,2})[\/\-](\d{1,2})[\/\-](\d{4})/);
-  if (m) {
-    const d = new Date(+m[3], +m[2]-1, +m[1]);
-    return isNaN(d) ? null : d;
-  }
-  m = s.match(/^(\d{4})[\/\-](\d{1,2})[\/\-](\d{1,2})/);
-  if (m) {
-    const d = new Date(+m[1], +m[2]-1, +m[3]);
-    return isNaN(d) ? null : d;
-  }
-  const d = new Date(s);
-  return isNaN(d) ? null : d;
+function anioActualReporte(){
+  return new Date().getFullYear();
+}
+function formatearMesAnioActual(valor){
+  const d = convertirFecha(valor);
+  if(isNaN(d)) return valor;
+  const meses = ['Enero','Febrero','Marzo','Abril','Mayo','Junio','Julio','Agosto','Septiembre','Octubre','Noviembre','Diciembre'];
+  return `${meses[d.getMonth()]} ${anioActualReporte()}`;
+}
+function formatearFechaCortaAnioActual(valor){
+  const d = convertirFecha(valor);
+  if(isNaN(d)) return valor;
+  const meses = ['Ene','Feb','Mar','Abr','May','Jun','Jul','Ago','Sep','Oct','Nov','Dic'];
+  return `${String(d.getDate()).padStart(2,'0')}-${meses[d.getMonth()]}-${anioActualReporte()}`;
 }
 
-function numero(valor) {
-  if (typeof valor === 'number') return Number.isFinite(valor) ? valor : 0;
-  if (valor == null || valor === '') return 0;
-  let s = String(valor).trim().replace(/\s/g,'');
-  if (s.includes(',') && s.includes('.')) s = s.lastIndexOf(',') > s.lastIndexOf('.') ? s.replace(/\./g,'').replace(',','.') : s.replace(/,/g,'');
-  else if (s.includes(',')) s = s.replace(',','.');
-  const n = Number(s);
+function formatearDensidad(valor){
+  if(valor===undefined || valor===null || valor==='') return '-';
+  const n = num(valor);
+  return n.toLocaleString('es-UY',{minimumFractionDigits:3,maximumFractionDigits:3});
+}
+function formatearFechaNormal(valor){
+  const d = convertirFecha(valor);
+  if(isNaN(d)) return valor;
+  return d.toLocaleDateString('es-UY',{day:'2-digit',month:'2-digit',year:'numeric'});
+}
+function fmt(v, tipo='auto'){
+  if(v===undefined||v===null||v==='') return '-';
+  if(esFecha(v)){
+    if(tipo==='titulo') return formatearFechaTitulo(v);
+    if(tipo==='normal') return formatearFechaNormal(v);
+    if(tipo==='cortaAnio') return formatearFechaCortaAnio(v);
+    if(tipo==='mesAnio') return formatearMesAnio(v);
+    return formatearFechaCorta(v);
+  }
+  if(typeof v==='number') return v.toLocaleString('es-UY',{maximumFractionDigits:2});
+  return String(v);
+}
+const num = v => {
+  if(typeof v==='number') return v;
+  const raw = String(v ?? '').trim();
+  if(!raw) return 0;
+  const cleaned = raw.replace(/%/g,'').replace(/\s/g,'').replace(/\./g,'').replace(',','.');
+  const n = Number(cleaned);
   return Number.isFinite(n) ? n : 0;
+};
+const cls = v => num(v)<0 ? 'bad' : num(v)>0 ? 'ok' : '';
+function aoa(ws, range){ return XLSX.utils.sheet_to_json(ws,{header:1,range,defval:''}).filter(r=>r.some(c=>c!=='')); }
+function objTable(rows){ if(!rows.length) return []; const h=rows[0].map(x=>String(x||'')); return rows.slice(1).map(r=>Object.fromEntries(h.map((k,i)=>[k||`Col ${i+1}`,r[i]]))); }
+function esCeldaVacia(v){
+  return v===undefined || v===null || String(v).trim()==='' || String(v).trim()==='-';
 }
+function limpiarColumnasVacias(rows){
+  if(!rows.length) return rows;
+  const keep = [];
 
-function valorCampo(r, nombre) { const c = campos[nombre]; return c !== null && c !== undefined ? r[c] : ''; }
-function fechaRegistro(r) { return r.__fecha; }
-function anioRegistro(r) { const f=fechaRegistro(r); return f ? f.getFullYear() : Number(valorCampo(r,'anio')) || null; }
-function mesRegistro(r) {
-  // El mes se toma EXCLUSIVAMENTE de la columna "Mes" del JSON.
-  // No se calcula a partir de FechaRto.
-  const v = valorCampo(r, 'mes');
-  const n = Number(v);
-  if (n >= 1 && n <= 12) return n;
-  const i = MESES.findIndex(m => normalizar(m) === normalizar(v));
-  return i >= 0 ? i + 1 : null;
-}
-function nombreMesRegistro(r) {
-  const n = mesRegistro(r);
-  return n ? MESES[n - 1] : texto(r, 'mes');
-}
-function texto(r,nombre){ const v=valorCampo(r,nombre); return String(v ?? '').trim(); }
-function esViajeValido(r){
-  const tipo = normalizar(texto(r,'tipoRemito'));
-  const mcs = numero(valorCampo(r,'metrosCubicos'));
-  return tipo === 'entrada' && mcs > 0;
-}
-function claveViaje(r){
-  const remito = texto(r,'remito');
-  return remito || `${anioRegistro(r)}|${mesRegistro(r)}|${texto(r,'matricula')}|${fechaRegistro(r)?.getTime() || ''}`;
-}
+  for(let c=0; c<Math.max(...rows.map(r=>r.length)); c++){
+    const header = rows[0]?.[c];
+    const bodyHasData = rows.slice(1).some(r=>!esCeldaVacia(r[c]));
 
-function llenarSelect(id, valores, etiqueta='Todos') {
-  const s=document.getElementById(id); const anterior=s.value;
-  s.innerHTML=`<option value="">${etiqueta}</option>`;
-  valores.forEach(v=>{ const o=document.createElement('option'); o.value=v; o.textContent=v; s.appendChild(o); });
-  if ([...s.options].some(o=>o.value===anterior)) s.value=anterior;
-}
-
-const CONFIG_FILTROS = [
-  {id:'fAnio', campo:'anio', numerico:true},
-  {id:'fMes', campo:'mes', numerico:true, mes:true},
-  {id:'fDeposito', campo:'deposito'},
-  {id:'fContrato', campo:'contrato'},
-  {id:'fMonte', campo:'monte'}
-];
-
-function valorFiltroRegistro(r, campo) {
-  if (campo === 'anio') return anioRegistro(r);
-  if (campo === 'mes') return mesRegistro(r);
-  return texto(r, campo);
-}
-
-function seleccionFiltros() {
-  const seleccion = {};
-  CONFIG_FILTROS.forEach(cfg => {
-    const valor = document.getElementById(cfg.id).value;
-    seleccion[cfg.campo] = cfg.mes && valor ? Number(valor.slice(0,2)) : valor;
-  });
-  return seleccion;
-}
-
-function coincideConSeleccion(r, seleccion, campoIgnorado=null) {
-  return CONFIG_FILTROS.every(cfg => {
-    if (cfg.campo === campoIgnorado) return true;
-    const elegido = seleccion[cfg.campo];
-    if (elegido === '' || elegido === null || elegido === undefined) return true;
-    const actual = valorFiltroRegistro(r, cfg.campo);
-    return cfg.numerico ? Number(actual) === Number(elegido) : String(actual) === String(elegido);
-  });
-}
-
-function valoresDisponibles(campo, seleccion, numerico=false) {
-  const valores = datosOriginales
-    .filter(r => coincideConSeleccion(r, seleccion, campo))
-    .map(r => valorFiltroRegistro(r, campo))
-    .filter(v => v !== '' && v !== null && v !== undefined);
-
-  return [...new Set(valores)].sort((a,b) =>
-    numerico
-      ? Number(a) - Number(b)
-      : String(a).localeCompare(String(b), 'es', {numeric:true, sensitivity:'base'})
-  );
-}
-
-function actualizarOpcionesFiltros() {
-  let seleccion = seleccionFiltros();
-
-  CONFIG_FILTROS.forEach(cfg => {
-    const select = document.getElementById(cfg.id);
-    const anterior = select.value;
-    const disponibles = valoresDisponibles(cfg.campo, seleccion, cfg.numerico);
-    const opciones = cfg.mes
-      ? disponibles.map(n => `${String(n).padStart(2,'0')} - ${MESES[n-1]}`)
-      : disponibles;
-
-    llenarSelect(cfg.id, opciones);
-
-    // Si una selección dejó de existir por otro filtro, se limpia automáticamente.
-    if (anterior && ![...select.options].some(o => o.value === anterior)) {
-      select.value = '';
-      seleccion[cfg.campo] = '';
+    // Mantiene columnas con encabezado real o con datos reales en el cuerpo.
+    // Elimina columnas fantasma como "Col 4" / "Col 5" cuando solo tienen vacío o guiones.
+    if(!esCeldaVacia(header) || bodyHasData){
+      keep.push(c);
     }
+  }
+
+  return rows.map(r=>keep.map(c=>r[c]));
+}
+
+function anioDeValor(valor){
+  const d = convertirFecha(valor);
+  return isNaN(d) ? null : d.getFullYear();
+}
+function filtrarFilasPorAnio(rows, anio){
+  if(!rows.length) return rows;
+  const head = rows[0];
+  const body = rows.slice(1).filter(r=>anioDeValor(r[0]) === anio);
+  return [head, ...body];
+}
+
+function normalizarTexto(v){
+  return String(v || '')
+    .trim()
+    .toLowerCase()
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g,'');
+}
+
+function prepararEntregasContrato(rows){
+  if(!rows.length) return {combinada:[]};
+
+  // Busca la fila real de encabezados: Mes / Fecha cierre / A entregar MCS...
+  const headerIndex = rows.findIndex(r => normalizarTexto(r[0]) === 'mes');
+  if(headerIndex < 0) return {combinada:[]};
+
+  const header = rows[headerIndex];
+  const anioReporte = anioActualReporte();
+
+  // Todos los meses reales del contrato, desde el primer dato histórico.
+  // Excluye filas vacías, TOTAL y bloques inferiores porque no tienen una fecha válida en columna A.
+  const bodyHistorico = rows.slice(headerIndex + 1).filter(r => anioDeValor(r[0]) !== null);
+
+  // En pantalla dejamos solo el año actual, pero los acumulados se calculan desde el primer dato.
+  const bodyAnioActual = bodyHistorico.filter(r => anioDeValor(r[0]) === anioReporte);
+
+  // Detecta automáticamente dónde empieza el bloque derecho:
+  // Días Entregas 15 Cam/Día / Entrega Anual / Entrega Contrato.
+  let idxDias = header.findIndex(c => normalizarTexto(c).includes('dias entregas'));
+  if(idxDias < 0) idxDias = 6;
+
+  const encabezado = [
+    ...header.slice(0,5),
+    header[idxDias] || 'Días Entregas 15 Cam/Día',
+    header[idxDias + 1] || 'Entrega Anual',
+    header[idxDias + 2] || 'Entrega Contrato'
+  ];
+
+  const mapFila = r => [
+    ...r.slice(0,5),
+    r[idxDias],
+    r[idxDias + 1],
+    r[idxDias + 2]
+  ];
+
+  const detalle = bodyAnioActual.map(mapFila);
+  const historico = bodyHistorico.map(mapFila);
+
+  function totales(lista){
+    const totalEntregar = lista.reduce((acc,r)=>acc + num(r[2]), 0);
+    const totalEntregado = lista.reduce((acc,r)=>acc + num(r[3]), 0);
+    const totalSaldo = lista.reduce((acc,r)=>acc + num(r[4]), 0);
+    const totalDias = lista.reduce((acc,r)=>acc + num(r[5]), 0);
+    const entregaTotal = totalEntregar ? totalEntregado / totalEntregar : 0;
+    const ultimaEntregaContrato = [...lista].reverse().find(r => !esCeldaVacia(r[7]))?.[7] || entregaTotal;
+    return {totalEntregar,totalEntregado,totalSaldo,totalDias,entregaTotal,ultimaEntregaContrato};
+  }
+
+  if(detalle.length){
+    const tAnio = totales(detalle);
+    detalle.push([
+      'TOTAL AÑO ACTUAL',
+      '',
+      tAnio.totalEntregar,
+      tAnio.totalEntregado,
+      tAnio.totalSaldo,
+      tAnio.totalDias,
+      tAnio.entregaTotal,
+      tAnio.ultimaEntregaContrato
+    ]);
+  }
+
+  if(historico.length){
+    const tHist = totales(historico);
+    detalle.push([
+      'TOTAL DESDE INICIO',
+      '',
+      tHist.totalEntregar,
+      tHist.totalEntregado,
+      tHist.totalSaldo,
+      tHist.totalDias,
+      tHist.entregaTotal,
+      tHist.ultimaEntregaContrato
+    ]);
+  }
+
+  return {combinada:[encabezado, ...detalle]};
+}
+
+function formatearPorcentaje(valor){
+  if(valor===undefined || valor===null || valor==='') return '-';
+  const n = num(valor);
+  return (n * 100).toLocaleString('es-UY',{minimumFractionDigits:1,maximumFractionDigits:1}) + '%';
+}
+
+function esValorNumerico(valor){
+  if(typeof valor === 'number') return Number.isFinite(valor);
+  const texto = String(valor ?? '').trim();
+  if(!texto) return false;
+
+  // Acepta números con formato uruguayo: 29.844,48 / 0,58 / -10.957.
+  return /^-?\d{1,3}(?:\.\d{3})*(?:,\d+)?$/.test(texto) || /^-?\d+(?:,\d+)?$/.test(texto);
+}
+
+function formatearNumero(valor, decimales){
+  if(valor===undefined || valor===null || valor==='') return '-';
+
+  // Conserva textos, fechas y subtítulos de las tablas.
+  // Evita convertir textos como "SALDO EN TRONCOS" o "15-Jun" en cero.
+  if(!esValorNumerico(valor)) return fmt(valor);
+
+  return num(valor).toLocaleString('es-UY',{
+    minimumFractionDigits:decimales,
+    maximumFractionDigits:decimales
   });
 }
 
-function seleccionarPeriodoActual() {
-  const hoy = new Date();
-  const anioActual = String(hoy.getFullYear());
-  const numeroMesActual = hoy.getMonth() + 1;
-  const prefijoMesActual = `${String(numeroMesActual).padStart(2,'0')} - `;
+function formatCell(valor, header, title){
+  const h = normalizarTexto(header);
+  const t = normalizarTexto(title);
 
-  const selectAnio = document.getElementById('fAnio');
-  if ([...selectAnio.options].some(opcion => opcion.value === anioActual)) {
-    selectAnio.value = anioActual;
+  if(h === 'entrega anual' || h === 'entrega contrato') {
+    return formatearPorcentaje(valor);
   }
 
-  // Al seleccionar el año, se recalculan los meses disponibles para ese año.
-  actualizarOpcionesFiltros();
-
-  const selectMes = document.getElementById('fMes');
-  const opcionMesActual = [...selectMes.options].find(opcion => opcion.value.startsWith(prefijoMesActual));
-  if (opcionMesActual) {
-    selectMes.value = opcionMesActual.value;
+  // Saldos por monte: todos los valores operativos con 2 decimales.
+  if(t === 'saldos por monte'){
+    if(h === 'monte' || h === 'avance') return fmt(valor);
+    return formatearNumero(valor, 2);
   }
-}
 
-function inicializarFiltros() {
-  actualizarOpcionesFiltros();
-  CONFIG_FILTROS.forEach(({id}) => {
-    document.getElementById(id).addEventListener('change', aplicarFiltros);
-  });
-  document.getElementById('btnLimpiar').addEventListener('click', () => {
-    CONFIG_FILTROS.forEach(({id}) => document.getElementById(id).value = '');
-    aplicarFiltros();
-  });
-
-  const btnExportar = document.getElementById('btnExportar');
-  if (btnExportar) {
-    btnExportar.addEventListener('click', exportarExcel);
+  // Producción diaria BDMT: producción a 2 decimales.
+  if(t === 'produccion diaria bdmt'){
+    if(h === 'mes' || h === 'date' || h === 'dia') return fmt(valor);
+    return formatearNumero(valor, 2);
   }
-}
 
-function aplicarFiltros() {
-  actualizarOpcionesFiltros();
-  const seleccion = seleccionFiltros();
-  datosFiltrados = datosOriginales.filter(r => coincideConSeleccion(r, seleccion));
-  render();
-}
-
-const fmt0=new Intl.NumberFormat('es-UY',{maximumFractionDigits:0});
-const fmt2=new Intl.NumberFormat('es-UY',{minimumFractionDigits:2,maximumFractionDigits:2});
-function esBajaPorExportacion(r) {
-  const tipo = normalizar(texto(r,'tipoRemito')).replace(/[\s-]+/g,'_');
-  return tipo === 'baja_por_exportacion';
-}
-
-function obtenerRegistrosRecibidos(){
-  // Los MCS recibidos excluyen expresamente las bajas por exportación.
-  return datosFiltrados.filter(r => !esBajaPorExportacion(r));
-}
-
-function obtenerViajesValidos(){
-  // Para viajes recibidos se cuentan remitos únicos, excluyendo bajas por exportación.
-  return obtenerRegistrosRecibidos().filter(r => texto(r,'remito') !== '');
-}
-
-function renderKPIs(){
-  const recibidos = obtenerRegistrosRecibidos();
-  const exportaciones = datosFiltrados.filter(esBajaPorExportacion);
-
-  const remitosUnicos = new Set(
-    recibidos.filter(r => texto(r,'remito') !== '').map(r => texto(r,'remito'))
-  ).size;
-
-  const totalMcsRecibidos = recibidos.reduce(
-    (s,r) => s + numero(valorCampo(r,'metrosCubicos')),
-    0
-  );
-
-  const totalMcsExportacion = exportaciones.reduce(
-    (s,r) => s + numero(valorCampo(r,'metrosCubicos')),
-    0
-  );
-
-  const mcsPorViaje = remitosUnicos > 0 ? totalMcsRecibidos / remitosUnicos : 0;
-
-  document.getElementById('kRegistros').textContent = fmt0.format(remitosUnicos);
-  document.getElementById('kMcsRecibidos').textContent = fmt2.format(totalMcsRecibidos);
-  document.getElementById('kMcsViaje').textContent = fmt2.format(mcsPorViaje);
-  document.getElementById('kExportacion').textContent = fmt2.format(totalMcsExportacion);
-}
-
-function agruparMcs(claveFn, registros=datosFiltrados) {
-  const m=new Map();
-  registros.forEach(r=>{
-    const k=claveFn(r);
-    if(!k)return;
-    m.set(k,(m.get(k)||0)+numero(valorCampo(r,'metrosCubicos')));
-  });
-  return m;
-}
-
-const etiquetasColumnas = {
-  id: 'etiquetasColumnas',
-  afterDatasetsDraw(chart) {
-    const {ctx, chartArea} = chart;
-    ctx.save();
-    ctx.fillStyle = '#edf3fb';
-    ctx.font = '600 11px Segoe UI, Arial, sans-serif';
-    ctx.textAlign = 'center';
-    ctx.textBaseline = 'bottom';
-
-    chart.data.datasets.forEach((dataset, datasetIndex) => {
-      const meta = chart.getDatasetMeta(datasetIndex);
-      if (meta.hidden) return;
-
-      meta.data.forEach((barra, index) => {
-        const valor = Number(dataset.data[index]) || 0;
-        if (valor <= 0) return;
-
-        const textoValor = fmt2.format(valor);
-        const y = Math.max(barra.y - 5, chartArea.top + 11);
-        ctx.fillText(textoValor, barra.x, y);
-      });
-    });
-    ctx.restore();
+  // Stocks FRIMOSA: todos los valores numéricos sin decimales.
+  if(t === 'stocks planta frimosa'){
+    return formatearNumero(valor, 0);
   }
-};
 
-const etiquetasColumnasApiladas = {
-  id: 'etiquetasColumnasApiladas',
-  afterDatasetsDraw(chart) {
-    const {ctx} = chart;
-    ctx.save();
-    ctx.fillStyle = '#ffffff';
-    ctx.font = '600 10px Segoe UI, Arial, sans-serif';
-    ctx.textAlign = 'center';
-    ctx.textBaseline = 'middle';
-
-    chart.data.datasets.forEach((dataset, datasetIndex) => {
-      const meta = chart.getDatasetMeta(datasetIndex);
-      if (meta.hidden) return;
-
-      meta.data.forEach((barra, index) => {
-        const valor = Number(dataset.data[index]) || 0;
-        if (valor <= 0) return;
-
-        const alto = Math.abs((barra.base ?? barra.y) - barra.y);
-        if (alto < 16) return;
-
-        const centroY = barra.y + alto / 2;
-        ctx.fillText(fmt2.format(valor), barra.x, centroY);
-      });
-    });
-    ctx.restore();
+  // Rolos: metros cúbicos con 2 decimales, densidad con 3 y camiones sin decimales.
+  if(t.includes('rolos')){
+    if(h === 'dia' || h === 'semana' || h === 'mes' || h === 'total camiones') return fmt(valor);
+    if(h === 'densidad promedio') return formatearNumero(valor, 3);
+    return formatearNumero(valor, 2);
   }
-};
 
-const etiquetasFinBarra = {
-  id: 'etiquetasFinBarra',
-  afterDatasetsDraw(chart) {
-    const {ctx, chartArea} = chart;
-    ctx.save();
-    ctx.fillStyle = '#edf3fb';
-    ctx.font = '600 11px Segoe UI, Arial, sans-serif';
-    ctx.textAlign = 'left';
-    ctx.textBaseline = 'middle';
-
-    chart.data.datasets.forEach((dataset, datasetIndex) => {
-      const meta = chart.getDatasetMeta(datasetIndex);
-      if (meta.hidden) return;
-
-      meta.data.forEach((barra, index) => {
-        const valor = Number(dataset.data[index]) || 0;
-        const textoValor = `${fmt2.format(valor)} MCS`;
-        const x = Math.min(barra.x + 7, chartArea.right + 75);
-        ctx.fillText(textoValor, x, barra.y);
-      });
-    });
-    ctx.restore();
+  // Trozas: valores enteros.
+  if(t.includes('trozas')){
+    if(h === 'dia' || h === 'semana' || h === 'mes') return fmt(valor);
+    return formatearNumero(valor, 0);
   }
-};
 
-function renderGraficos(){
-  const viajes = obtenerViajesValidos();
-  const clavesMes = [...new Set(viajes.map(r=>{
-    const a=anioRegistro(r), m=mesRegistro(r);
-    return a&&m ? `${a}|${String(m).padStart(2,'0')}` : '';
-  }).filter(Boolean))].sort();
+  // Entregas FAS a UPM PDT: formato específico por columna.
+  if(t.includes('entregas fas')){
+    if(h === 'mes') return formatearMesAnio(valor);
+    if(h === 'fecha cierre') return formatearFechaCortaAnio(valor);
+    if(h === 'entregado mcs' || h === 'saldo mensual') return formatearNumero(valor, 2);
+    if(h.includes('dias entregas')) return formatearNumero(valor, 1);
+    return fmt(valor);
+  }
 
-  const depositos = [...new Set(viajes.map(r=>texto(r,'deposito')).filter(Boolean))]
-    .sort((a,b)=>a.localeCompare(b,'es',{numeric:true,sensitivity:'base'}));
+  if(h === 'densidad promedio') return formatearDensidad(valor);
 
-  const labelsMes=clavesMes.map(k=>{
-    const [a,m]=k.split('|');
-    return `${MESES[Number(m)-1]} ${a}`;
-  });
+  return fmt(valor);
+}
 
-  const datasetsMes = depositos.map(deposito => ({
-    label: deposito,
-    data: clavesMes.map(clave => {
-      const [anio, mes] = clave.split('|');
-      return viajes.reduce((s,r) => {
-        return anioRegistro(r)===Number(anio) && mesRegistro(r)===Number(mes) && texto(r,'deposito')===deposito
-          ? s + numero(valorCampo(r,'metrosCubicos'))
-          : s;
-      },0);
-    }),
-    borderWidth: 1,
-    borderRadius: 4
-  }));
+function agregarTotalesMensuales(title, rows){
+  if(!rows.length) return rows;
 
-  const base={
-    responsive:true,
-    maintainAspectRatio:false,
-    interaction:{mode:'index',intersect:false},
-    plugins:{
-      legend:{display:true,position:'bottom',labels:{color:'#aebbd0',boxWidth:12}},
-      tooltip:{callbacks:{label:(ctx)=>`${ctx.dataset.label}: ${fmt2.format(ctx.parsed.y)} MCS`}}
-    },
-    scales:{
-      x:{stacked:false,ticks:{color:'#aebbd0'},grid:{color:'rgba(255,255,255,.05)'}},
-      y:{stacked:false,beginAtZero:true,ticks:{color:'#aebbd0'},grid:{color:'rgba(255,255,255,.07)'},title:{display:true,text:'MCS',color:'#aebbd0'}}
+  const titulo = normalizarTexto(title);
+  const yaTieneTotal = rows.slice(1).some(r => normalizarTexto(r[0]) === 'total');
+  if(yaTieneTotal) return rows;
+
+  const body = rows.slice(1);
+
+  if(titulo === 'trozas · ingreso mensual'){
+    const totalViajes = body.reduce((acc,row)=>acc + num(row[1]), 0);
+    return [...rows, ['TOTAL', totalViajes]];
+  }
+
+  if(titulo === 'rolos · ingreso mensual'){
+    const totalMC = body.reduce((acc,row)=>acc + num(row[1]), 0);
+    const densidadPonderada = totalMC
+      ? body.reduce((acc,row)=>acc + (num(row[1]) * num(row[2])), 0) / totalMC
+      : 0;
+
+    return [...rows, ['TOTAL', totalMC, densidadPonderada]];
+  }
+
+  return rows;
+}
+
+function tableHtml(title, rows, max=10){
+  rows = limpiarColumnasVacias(rows);
+  rows = agregarTotalesMensuales(title, rows);
+  if(!rows.length) return `<div class="card"><h2>${title}</h2><p class="muted">Sin datos.</p></div>`;
+
+  let head = rows[0].map(x=>String(x||'').trim());
+  const esSaldosPorMonte = normalizarTexto(title) === 'saldos por monte';
+
+  // En las tablas semanales, la primera columna del rango corresponde al número de semana.
+  // Si el encabezado viene vacío desde Excel, se fuerza el título "Semana".
+  if(title.toLowerCase().includes('semanal') && !head[0]) {
+    head[0] = 'Semana';
+  }
+
+  head = head.map((h,i)=>h || `Col ${i+1}`);
+
+  // Encabezados compactos para que Saldos por monte entre completo en el resumen.
+  // La columna Avance muestra la barra de progreso y el porcentaje.
+  if(esSaldosPorMonte){
+    head = ['Monte','Cargados','En monte','Saldo','Avance'];
+  }
+
+  const allBodyRows = rows.slice(1);
+  const esStocksPlanta = normalizarTexto(title) === 'stocks planta frimosa';
+
+  // Para Stocks planta FRIMOSA se respeta el orden original del Excel:
+  // SALDO EN CHIPS -> SALDO EN TRONCOS -> TOTAL -> SALDOS TRONCOS CANCHA ACOPIO.
+  // En el resto de tablas, los totales se mantienen al final.
+  let body;
+
+  if(esStocksPlanta){
+    body = allBodyRows.slice(0,max);
+  }else{
+    const totalRows = allBodyRows.filter(r =>
+      normalizarTexto(r[0]).includes('total') || normalizarTexto(r[0]).includes('acumulado')
+    );
+    const normalRows = allBodyRows.filter(r =>
+      !normalizarTexto(r[0]).includes('total') && !normalizarTexto(r[0]).includes('acumulado')
+    );
+    body = [...normalRows.slice(0,max), ...totalRows];
+  }
+
+  return `<h2>${title}</h2><div class="table-scroll"><table><thead><tr>${head.map(h=>`<th>${h}</th>`).join('')}</tr></thead><tbody>${body.map(r=>{
+    const firstCell = normalizarTexto(r[0]);
+    const textoFila = String(r[0] || '').trim().toUpperCase();
+    const isTotal = textoFila.includes('ACUMULADO') || textoFila.includes('TOTAL');
+    const isSubsection = firstCell === 'saldo en troncos' || firstCell === 'saldos troncos cancha acopio';
+    const esTotalStocks = esStocksPlanta && textoFila === 'TOTAL';
+
+    let rowClass = '';
+    if(esTotalStocks){
+      rowClass = ' class="plain-total-row"';
+    }else if(isTotal){
+      rowClass = ' class="total-row"';
+    }else if(isSubsection){
+      rowClass = ' class="subsection-row"';
     }
-  };
 
-  if(graficoMes)graficoMes.destroy();
-  graficoMes=new Chart(document.getElementById('graficoMes'),{
-    type:'bar',
-    data:{labels:labelsMes,datasets:datasetsMes},
-    plugins:[etiquetasColumnas],
-    options:{
-      ...base,
-      layout:{padding:{top:22}},
-      plugins:{
-        ...base.plugins,
-        legend:{display:true,position:'bottom',labels:{color:'#aebbd0',boxWidth:12}},
-        tooltip:{callbacks:{label:(ctx)=>`${ctx.dataset.label}: ${fmt2.format(ctx.parsed.y)} MCS`}}
+    let cols = head.map((h,i)=>{
+      if(esSaldosPorMonte && normalizarTexto(h) === 'avance'){
+        const cargado = num(r[1]);
+        const enMonte = num(r[2]);
+        const progreso = enMonte > 0 ? (cargado / enMonte) * 100 : 0;
+        const progresoBarra = Math.max(0, Math.min(progreso, 100));
+
+        return `<td class="progress-cell">
+          <div class="progress-bar"><i style="width:${progresoBarra}%"></i></div>
+          <div class="progress-text">${progreso.toLocaleString('es-UY',{minimumFractionDigits:1,maximumFractionDigits:1})}%</div>
+        </td>`;
       }
-    }
+
+      return `<td class="${cls(r[i])}">${formatCell(r[i], h, title)}</td>`;
+    }).join('');
+
+    return `<tr${rowClass}>${cols}</tr>`;
+  }).join('')}</tbody></table></div>`;
+}
+function lastNumber(rows){ let vals=[]; rows.flat().forEach(v=>{ if(typeof v==='number') vals.push(v); }); return vals.at(-1) ?? 0; }
+function ultimoNumeroFila(row){
+  const nums = row.filter(v => typeof v === 'number' || /^-?[0-9.]+(,[0-9]+)?$/.test(String(v || '').trim())).map(num);
+  return nums.at(-1) ?? 0;
+}
+function buscarTotalPorTexto(rows, texto){
+  const needle = normalizarTexto(texto);
+  const fila = rows.find(r => r.some(c => normalizarTexto(c).includes(needle)));
+  return fila ? ultimoNumeroFila(fila) : 0;
+}
+
+function activarNavegacionDashboard(){
+  const buttons = document.querySelectorAll('.tab-btn');
+  const pages = document.querySelectorAll('.dashboard-page');
+
+  buttons.forEach(btn=>{
+    btn.addEventListener('click',()=>{
+      const target = btn.dataset.page;
+
+      buttons.forEach(b=>b.classList.remove('active'));
+      pages.forEach(p=>p.classList.remove('active'));
+
+      btn.classList.add('active');
+      const page = document.getElementById(target);
+      if(page) page.classList.add('active');
+
+      if(target === 'page-rolos'){
+        window.setTimeout(()=>document.dispatchEvent(new Event('rolos-visible')), 50);
+      }
+
+      if(target === 'page-trozas'){
+        window.setTimeout(()=>document.dispatchEvent(new Event('trozas-visible')), 50);
+      }
+
+      if(target === 'page-contrato'){
+        window.setTimeout(()=>document.dispatchEvent(new Event('contrato-visible')), 50);
+      }
+
+      if(target === 'page-pilas'){
+        cargarIframePilas();
+      }
+
+      window.scrollTo({top:0,behavior:'smooth'});
+    });
   });
+}
 
-  const dep=[...agruparMcs(r=>texto(r,'origen'),viajes).entries()].sort((a,b)=>b[1]-a[1]);
-  if(graficoDeposito)graficoDeposito.destroy();
 
-  const canvasOrigen = document.getElementById('graficoDeposito');
-  const contenedorOrigen = canvasOrigen.parentElement;
-  const anchoDisponible = contenedorOrigen.clientWidth || 900;
-  const anchoNecesario = Math.max(anchoDisponible, dep.length * (window.innerWidth <= 650 ? 72 : 82));
-  canvasOrigen.style.minWidth = `${anchoNecesario}px`;
 
-  graficoDeposito=new Chart(canvasOrigen,{
-    type:'bar',
+let chartsRolos = [];
+let datosRolosActuales = null;
+
+function destruirGraficosRolos(){
+  chartsRolos.forEach(chart=>chart.destroy());
+  chartsRolos = [];
+}
+
+function etiquetaRolos(valor, tipo){
+  if(tipo === 'Día') return fmt(valor);
+  return String(valor ?? '');
+}
+
+function crearGraficoRolosDobleEje(canvasId, filas, tituloEjeX){
+  const canvas = document.getElementById(canvasId);
+  if(!canvas || !window.Chart) return;
+
+  let filasValidas = (filas || [])
+    .slice(1)
+    .filter(fila => !normalizarTexto(fila[0]).includes('total'));
+
+  // En los gráficos semanales se ordena de la semana más antigua a la más reciente.
+  if(tituloEjeX === 'Semana'){
+    filasValidas = filasValidas.slice().sort((a,b) => num(a[0]) - num(b[0]));
+  }
+
+  const etiquetas = filasValidas.map(fila => etiquetaRolos(fila[0], tituloEjeX));
+  const metrosCubicos = filasValidas.map(fila => Number(num(fila[1])) || 0);
+  const densidad = filasValidas.map(fila => Number(num(fila[2])) || 0);
+
+  const chart = new Chart(canvas,{
     data:{
-      labels:dep.map(x=>x[0]),
-      datasets:[{
-        label:'MCS',
-        data:dep.map(x=>x[1]),
-        borderWidth:1,
-        borderRadius:5,
-        maxBarThickness:54,
-        categoryPercentage:0.78,
-        barPercentage:0.82
-      }]
+      labels:etiquetas,
+      datasets:[
+        {
+          type:'bar',
+          label:'Metros cúbicos',
+          data:metrosCubicos,
+          yAxisID:'yMcs',
+          backgroundColor:'rgba(78,161,255,.72)',
+          borderColor:'#4ea1ff',
+          borderWidth:1,
+          borderRadius:6,
+          maxBarThickness:34
+        },
+        {
+          type:'line',
+          label:'Densidad promedio',
+          data:densidad,
+          yAxisID:'yDensidad',
+          borderColor:'#2fd27a',
+          backgroundColor:'#2fd27a',
+          pointBackgroundColor:'#2fd27a',
+          pointBorderColor:'#eef4ff',
+          pointBorderWidth:1,
+          pointRadius:3,
+          pointHoverRadius:5,
+          tension:.28,
+          borderWidth:2.5
+        }
+      ]
     },
-    plugins:[etiquetasColumnas],
     options:{
-      ...base,
-      layout:{padding:{top:24,left:8,right:8,bottom:8}},
+      maintainAspectRatio:false,
+      responsive:true,
+      interaction:{mode:'index',intersect:false},
       plugins:{
-        ...base.plugins,
-        legend:{display:false},
-        tooltip:{callbacks:{label:(ctx)=>`${fmt2.format(ctx.parsed.y)} MCS`}}
+        legend:{
+          display:true,
+          labels:{color:'#c8d6ee',boxWidth:12,font:{size:11}}
+        },
+        tooltip:{
+          callbacks:{
+            label:ctx=>{
+              if(ctx.dataset.yAxisID === 'yDensidad'){
+                return ` ${ctx.dataset.label}: ${Number(ctx.parsed.y).toLocaleString('es-UY',{minimumFractionDigits:3,maximumFractionDigits:3})}`;
+              }
+              return ` ${ctx.dataset.label}: ${Number(ctx.parsed.y).toLocaleString('es-UY',{minimumFractionDigits:2,maximumFractionDigits:2})} M³`;
+            }
+          }
+        }
       },
       scales:{
         x:{
-          ticks:{
-            color:'#aebbd0',
-            autoSkip:false,
-            maxRotation:55,
-            minRotation:55,
-            padding:8,
-            callback:function(value){
-              const etiqueta = String(this.getLabelForValue(value) ?? '');
-              const max = window.innerWidth <= 650 ? 16 : 22;
-              if (etiqueta.length <= max) return etiqueta;
-              const palabras = etiqueta.split(/\s+/);
-              const lineas=[];
-              let linea='';
-              palabras.forEach(palabra=>{
-                const candidata=linea ? `${linea} ${palabra}` : palabra;
-                if(candidata.length>max && linea){lineas.push(linea);linea=palabra;}else{linea=candidata;}
-              });
-              if(linea) lineas.push(linea);
-              return lineas.slice(0,3);
-            }
-          },
-          grid:{color:'rgba(255,255,255,.05)'}
+          title:{display:true,text:tituloEjeX,color:'#97a6c2',font:{size:11}},
+          grid:{display:false},
+          ticks:{color:'#c8d6ee',font:{size:10},maxRotation:0,autoSkip:true}
         },
-        y:{
+        yMcs:{
+          type:'linear',
+          position:'left',
           beginAtZero:true,
-          ticks:{color:'#aebbd0'},
-          grid:{color:'rgba(255,255,255,.07)'},
-          title:{display:true,text:'MCS',color:'#aebbd0'}
+          title:{display:true,text:'MCS',color:'#97a6c2',font:{size:11}},
+          grid:{color:'rgba(151,166,194,.14)'},
+          ticks:{
+            color:'#c8d6ee',
+            font:{size:10},
+            callback:value=>Number(value).toLocaleString('es-UY')
+          }
+        },
+        yDensidad:{
+          type:'linear',
+          position:'right',
+          min:0,
+          suggestedMax:1.05,
+          title:{display:true,text:'Densidad',color:'#97a6c2',font:{size:11}},
+          grid:{drawOnChartArea:false},
+          ticks:{
+            color:'#2fd27a',
+            font:{size:10},
+            callback:value=>Number(value).toLocaleString('es-UY',{minimumFractionDigits:3,maximumFractionDigits:3})
+          }
         }
       }
     }
   });
 
-  const productos = [...new Set(viajes.map(r=>texto(r,'producto')).filter(Boolean))]
-    .sort((a,b)=>a.localeCompare(b,'es',{numeric:true,sensitivity:'base'}));
+  chartsRolos.push(chart);
+}
 
-  const datasetsProductoMes = productos.map(producto => ({
-    label: producto,
-    data: clavesMes.map(clave => {
-      const [anio, mes] = clave.split('|');
-      return viajes.reduce((s,r) => {
-        return anioRegistro(r)===Number(anio) && mesRegistro(r)===Number(mes) && texto(r,'producto')===producto
-          ? s + numero(valorCampo(r,'metrosCubicos'))
-          : s;
-      },0);
-    }),
-    borderWidth: 1,
-    borderRadius: 4,
-    categoryPercentage: 0.72,
-    barPercentage: 0.78,
-    maxBarThickness: 110
-  }));
+function renderGraficosRolos(datos){
+  if(!window.Chart || !datos) return;
+  datosRolosActuales = datos;
 
-  if(graficoProductoMes) graficoProductoMes.destroy();
-  graficoProductoMes = new Chart(document.getElementById('graficoProductoMes'), {
+  // Espera un fotograma para que la pestaña Rolos tenga dimensiones reales antes de dibujar.
+  requestAnimationFrame(()=>{
+    destruirGraficosRolos();
+    crearGraficoRolosDobleEje('chartRolosDiario', datos.rolesDiario, 'Día');
+    crearGraficoRolosDobleEje('chartRolosSemanal', datos.rolesSemanal, 'Semana');
+    crearGraficoRolosDobleEje('chartRolosMensual', datos.rolesMensual, 'Mes');
+  });
+}
+
+document.addEventListener('rolos-visible',()=>{
+  if(datosRolosActuales) renderGraficosRolos(datosRolosActuales);
+});
+
+
+
+let chartsTrozas = [];
+let datosTrozasActuales = null;
+
+function destruirGraficosTrozas(){
+  chartsTrozas.forEach(chart=>chart.destroy());
+  chartsTrozas = [];
+}
+
+function etiquetaTrozas(valor, tipo){
+  if(tipo === 'Día') return fmt(valor);
+  return String(valor ?? '');
+}
+
+function crearGraficoTrozas(canvasId, filas, tituloEjeX){
+  const canvas = document.getElementById(canvasId);
+  if(!canvas || !window.Chart) return;
+
+  let filasValidas = (filas || [])
+    .slice(1)
+    .filter(fila => !normalizarTexto(fila[0]).includes('total'));
+
+  // En los gráficos semanales se ordena de la semana más antigua a la más reciente.
+  if(tituloEjeX === 'Semana'){
+    filasValidas = filasValidas.slice().sort((a,b) => num(a[0]) - num(b[0]));
+  }
+
+  const etiquetas = filasValidas.map(fila => etiquetaTrozas(fila[0], tituloEjeX));
+  const viajes = filasValidas.map(fila => Math.round(Number(num(fila[1])) || 0));
+
+  const chart = new Chart(canvas,{
     type:'bar',
-    data:{labels:labelsMes,datasets:datasetsProductoMes},
-    plugins:[etiquetasColumnasApiladas],
+    data:{
+      labels:etiquetas,
+      datasets:[{
+        label:'Viajes',
+        data:viajes,
+        backgroundColor:'rgba(157,124,255,.75)',
+        borderColor:'#9d7cff',
+        borderWidth:1,
+        borderRadius:6,
+        maxBarThickness:34
+      }]
+    },
     options:{
-      ...base,
-      layout:{padding:{top:14}},
+      maintainAspectRatio:false,
+      responsive:true,
+      interaction:{mode:'index',intersect:false},
       plugins:{
-        ...base.plugins,
-        legend:{display:true,position:'bottom',labels:{color:'#aebbd0',boxWidth:12}},
-        tooltip:{callbacks:{label:(ctx)=>`${ctx.dataset.label}: ${fmt2.format(ctx.parsed.y)} MCS`}}
+        legend:{display:true,labels:{color:'#c8d6ee',boxWidth:12,font:{size:11}}},
+        tooltip:{
+          callbacks:{
+            label:ctx=>` Viajes: ${Math.round(Number(ctx.parsed.y) || 0).toLocaleString('es-UY')}`
+          }
+        }
       },
       scales:{
-        x:{stacked:false,ticks:{color:'#aebbd0'},grid:{color:'rgba(255,255,255,.05)'},offset:true},
-        y:{stacked:false,beginAtZero:true,ticks:{color:'#aebbd0'},grid:{color:'rgba(255,255,255,.07)'},title:{display:true,text:'MCS',color:'#aebbd0'}}
+        x:{
+          title:{display:true,text:tituloEjeX,color:'#97a6c2',font:{size:11}},
+          grid:{display:false},
+          ticks:{color:'#c8d6ee',font:{size:10},maxRotation:0,autoSkip:true}
+        },
+        y:{
+          beginAtZero:true,
+          title:{display:true,text:'Viajes',color:'#97a6c2',font:{size:11}},
+          grid:{color:'rgba(151,166,194,.14)'},
+          ticks:{color:'#c8d6ee',font:{size:10},precision:0,callback:value=>Number(value).toLocaleString('es-UY',{maximumFractionDigits:0})}
+        }
+      }
+    }
+  });
+
+  chartsTrozas.push(chart);
+}
+
+function renderGraficosTrozas(datos){
+  if(!window.Chart || !datos) return;
+  datosTrozasActuales = datos;
+
+  requestAnimationFrame(()=>{
+    destruirGraficosTrozas();
+    crearGraficoTrozas('chartTrozasDiario', datos.trozasDiario, 'Día');
+    crearGraficoTrozas('chartTrozasSemanal', datos.trozasSemanal, 'Semana');
+    crearGraficoTrozas('chartTrozasMensual', datos.trozasMensual, 'Mes');
+  });
+}
+
+document.addEventListener('trozas-visible',()=>{
+  if(datosTrozasActuales) renderGraficosTrozas(datosTrozasActuales);
+});
+
+
+let chartContratoUPM = null;
+let datosContratoHistorico = [];
+let anioContratoSeleccionado = String(new Date().getFullYear());
+
+function obtenerContratoHistorico(rows){
+  if(!rows || !rows.length) return [];
+  const headerIndex = rows.findIndex(r => normalizarTexto(r[0]) === 'mes');
+  if(headerIndex < 0) return [];
+
+  const header = rows[headerIndex];
+  const idxEntregar = header.findIndex(c => normalizarTexto(c).includes('a entregar'));
+  const idxEntregado = header.findIndex(c => normalizarTexto(c).includes('entregado'));
+  const idxSaldo = header.findIndex(c => normalizarTexto(c).includes('saldo mensual'));
+
+  return rows.slice(headerIndex + 1)
+    .filter(r => anioDeValor(r[0]) !== null)
+    .map(r => {
+      const fecha = convertirFecha(r[0]);
+      return {
+        fecha,
+        anio: fecha.getFullYear(),
+        mes: formatearMesAnio(r[0]),
+        aEntregar: num(r[idxEntregar]),
+        entregado: num(r[idxEntregado]),
+        saldo: num(r[idxSaldo])
+      };
+    });
+}
+
+function añosContratoDisponibles(){
+  return [...new Set(datosContratoHistorico.map(f => f.anio))].sort((a,b)=>a-b);
+}
+
+function datosContratoFiltrados(){
+  if(anioContratoSeleccionado === 'Todos') return datosContratoHistorico;
+  return datosContratoHistorico.filter(f => f.anio === Number(anioContratoSeleccionado));
+}
+
+function fmtContrato(v, decimales=2){
+  return Number(v || 0).toLocaleString('es-UY',{
+    minimumFractionDigits:decimales,
+    maximumFractionDigits:decimales
+  });
+}
+
+function renderSelectorContrato(){
+  const selector = document.getElementById('contractYearSelector');
+  if(!selector) return;
+  const years = añosContratoDisponibles();
+  selector.innerHTML = `
+    <span class="contract-filter-label">Ver año</span>
+    <button class="contract-year-btn ${anioContratoSeleccionado === 'Todos' ? 'active' : ''}" data-contract-year="Todos" type="button">Todo</button>
+    ${years.map(y => `<button class="contract-year-btn ${String(anioContratoSeleccionado) === String(y) ? 'active' : ''}" data-contract-year="${y}" type="button">${y}</button>`).join('')}`;
+
+  selector.querySelectorAll('[data-contract-year]').forEach(btn => {
+    btn.addEventListener('click', () => {
+      anioContratoSeleccionado = btn.dataset.contractYear;
+      renderSelectorContrato();
+      renderGraficoContratoUPM();
+    });
+  });
+}
+
+function renderResumenContrato(){
+  const data = datosContratoFiltrados();
+  const target = document.getElementById('contractSummary');
+  if(!target) return;
+  const aEntregar = data.reduce((s,f) => s + f.aEntregar, 0);
+  const entregado = data.reduce((s,f) => s + f.entregado, 0);
+  const saldo = data.reduce((s,f) => s + f.saldo, 0);
+  target.innerHTML = `
+    <div class="contract-mini-kpi"><div class="mini-label">A entregar MCS</div><div class="mini-value">${fmtContrato(aEntregar)}</div></div>
+    <div class="contract-mini-kpi"><div class="mini-label">Entregado MCS</div><div class="mini-value ok">${fmtContrato(entregado)}</div></div>
+    <div class="contract-mini-kpi"><div class="mini-label">Saldo mensual acumulado</div><div class="mini-value ${saldo < 0 ? 'bad' : 'ok'}">${fmtContrato(saldo)}</div></div>`;
+}
+
+function renderGraficoContratoUPM(){
+  const canvas = document.getElementById('chartContratoUPM');
+  if(!canvas || !window.Chart) return;
+  const data = datosContratoFiltrados();
+  renderResumenContrato();
+  if(chartContratoUPM){
+    chartContratoUPM.destroy();
+    chartContratoUPM = null;
+  }
+
+  const labels = data.map(f => f.mes);
+  chartContratoUPM = new Chart(canvas,{
+    data:{
+      labels,
+      datasets:[
+        {
+          type:'bar',
+          label:'A entregar MCS',
+          data:data.map(f => f.aEntregar),
+          backgroundColor:'rgba(78,161,255,.55)',
+          borderColor:'#4ea1ff',
+          borderWidth:1,
+          borderRadius:5,
+          maxBarThickness:32,
+          yAxisID:'yMcs'
+        },
+        {
+          type:'bar',
+          label:'Entregado MCS',
+          data:data.map(f => f.entregado),
+          backgroundColor:'rgba(47,210,122,.68)',
+          borderColor:'#2fd27a',
+          borderWidth:1,
+          borderRadius:5,
+          maxBarThickness:32,
+          yAxisID:'yMcs'
+        },
+        {
+          type:'line',
+          label:'Saldo mensual',
+          data:data.map(f => f.saldo),
+          borderColor:'#f8c14a',
+          backgroundColor:'#f8c14a',
+          pointBackgroundColor:'#f8c14a',
+          pointBorderColor:'#eef4ff',
+          pointBorderWidth:1,
+          pointRadius:3,
+          pointHoverRadius:5,
+          borderWidth:2.5,
+          tension:.25,
+          yAxisID:'ySaldo'
+        }
+      ]
+    },
+    options:{
+      maintainAspectRatio:false,
+      responsive:true,
+      interaction:{mode:'index',intersect:false},
+      plugins:{
+        legend:{display:true,labels:{color:'#c8d6ee',boxWidth:12,font:{size:11}}},
+        tooltip:{
+          callbacks:{
+            label:ctx => ` ${ctx.dataset.label}: ${fmtContrato(ctx.parsed.y)} MCS`
+          }
+        }
+      },
+      scales:{
+        x:{
+          title:{display:true,text:'Mes',color:'#97a6c2',font:{size:11}},
+          grid:{display:false},
+          ticks:{color:'#c8d6ee',font:{size:10},maxRotation:0,autoSkip:true,maxTicksLimit:14}
+        },
+        yMcs:{
+          type:'linear',
+          position:'left',
+          beginAtZero:true,
+          title:{display:true,text:'MCS',color:'#97a6c2',font:{size:11}},
+          grid:{color:'rgba(151,166,194,.14)'},
+          ticks:{color:'#c8d6ee',font:{size:10},callback:v=>Number(v).toLocaleString('es-UY')}
+        },
+        ySaldo:{
+          type:'linear',
+          position:'right',
+          title:{display:true,text:'Saldo mensual',color:'#f8c14a',font:{size:11}},
+          grid:{drawOnChartArea:false},
+          ticks:{color:'#f8c14a',font:{size:10},callback:v=>Number(v).toLocaleString('es-UY')}
+        }
       }
     }
   });
 }
 
-function formatearFecha(fecha){ return fecha && !isNaN(fecha) ? fecha.toLocaleDateString('es-UY') : ''; }
-function mostrar(v){ if(v==null)return ''; if(typeof v==='number')return Number.isInteger(v)?fmt0.format(v):fmt2.format(v); return String(v); }
-function compararRemitos(a,b){
-  const ra = texto(a,'remito');
-  const rb = texto(b,'remito');
-  const na = Number(String(ra).replace(/[^0-9.-]/g,''));
-  const nb = Number(String(rb).replace(/[^0-9.-]/g,''));
-  const aNumerico = ra !== '' && Number.isFinite(na);
-  const bNumerico = rb !== '' && Number.isFinite(nb);
-  if (aNumerico && bNumerico && na !== nb) return na - nb;
-  if (aNumerico !== bNumerico) return aNumerico ? -1 : 1;
-  return ra.localeCompare(rb, 'es', {numeric:true, sensitivity:'base'});
+function renderVistaContrato(){
+  requestAnimationFrame(() => {
+    renderSelectorContrato();
+    renderGraficoContratoUPM();
+  });
 }
-function filasDetalleOrdenadas(){
-  return [...datosFiltrados].sort(compararRemitos);
-}
-function exportarExcel(){
-  const filas = filasDetalleOrdenadas();
 
-  if (!filas.length) {
-    alert('No hay registros para exportar con los filtros seleccionados.');
-    return;
+document.addEventListener('contrato-visible', () => {
+  if(datosContratoHistorico.length) renderVistaContrato();
+});
+
+function renderDatos(datos){
+  const origen = datos || {};
+  const alias = {
+    saldos:['saldos'],
+    produccion:['produccion'],
+    stocks:['stocks'],
+    rolesDiario:['rolesDiario','rolosDiario'],
+    rolesSemanal:['rolesSemanal','rolosSemanal'],
+    rolesMensual:['rolesMensual','rolosMensual'],
+    trozasDiario:['trozasDiario'],
+    trozasSemanal:['trozasSemanal'],
+    trozasMensual:['trozasMensual'],
+    contratoFull:['contratoFull']
+  };
+
+  const r = {};
+  Object.keys(RANGES).forEach(k => {
+    const key = (alias[k] || [k]).find(nombre => Array.isArray(origen[nombre]));
+    r[k] = key ? origen[key] : [];
+  });
+
+  const fechaDatos = origen.actualizado || new Date();
+  document.getElementById('fechaTitulo').textContent = formatearFechaTitulo(fechaDatos);
+  const entregas = prepararEntregasContrato(r.contratoFull);
+  r.contrato = entregas.combinada;
+  const saldos = objTable(r.saldos), prod=objTable(r.produccion), stocks=objTable(r.stocks);
+
+  const stockBDMTChips = buscarTotalPorTexto(r.stocks, 'Stock BDMT en pila de chips');
+  const saldoTroncosRend = buscarTotalPorTexto(r.stocks, 'Saldo Troncos para chipear x Rend');
+
+  const filaTotalInicio = r.contrato.find(rw => normalizarTexto(rw[0]) === 'total desde inicio') || [];
+  const totalContrato = num(filaTotalInicio[2]);
+  const entregadoContrato = num(filaTotalInicio[3]);
+  const pendienteContrato = Math.max(totalContrato - entregadoContrato, 0);
+  const pctEntregado = totalContrato ? entregadoContrato / totalContrato : 0;
+  const pctRestante = totalContrato ? pendienteContrato / totalContrato : 0;
+
+  document.getElementById('dash').innerHTML = `
+    <div class="dashboard-tabs" role="tablist" aria-label="Navegación del dashboard">
+      <button class="tab-btn active" data-page="page-resumen" type="button">🏠 Resumen</button>
+      <button class="tab-btn" data-page="page-rolos" type="button">🚚 Rolos</button>
+      <button class="tab-btn" data-page="page-trozas" type="button">🪵 Trozas</button>
+      <button class="tab-btn" data-page="page-contrato" type="button">📋 Contrato UPM</button>
+      <button class="tab-btn" data-page="page-densidades" type="button">📈 Densidades</button>
+      <button class="tab-btn" data-page="page-tiempos-descarga" type="button">⏱ Tiempos de descarga</button>
+      <button class="tab-btn" data-page="page-pilas" type="button">🌲 Pilas en Monte</button>
+      <button class="tab-btn" data-page="page-mcs-recibidos" type="button">📦 MCS Recibidos</button>
+    </div>
+
+    <section class="dashboard-page active" id="page-resumen">
+      <div class="page-title">Resumen ejecutivo</div>
+      <div class="kpis">
+        <div class="kpi"><div class="label">Stock BDMT en pila de chips</div><div class="value">${fmt(stockBDMTChips)}</div><div class="sub">Total stock actual</div></div>
+        <div class="kpi"><div class="label">Saldo Troncos para chipear x Rend.</div><div class="value">${fmt(saldoTroncosRend)}</div><div class="sub">Total disponible para producción</div></div>
+        <div class="kpi"><div class="label">Total Entregas Contrato UPM</div><div class="value ${cls(pctEntregado)}">${formatearPorcentaje(pctEntregado)}</div><div class="sub">${fmt(entregadoContrato)} / ${fmt(totalContrato)} MCS · ${fmt(pendienteContrato)} pendientes · ${formatearPorcentaje(pctRestante)} restante</div></div>
+      </div>
+      <div class="grid">
+        <section class="card summary-montes">${tableHtml('Saldos por monte', r.saldos, 8)}</section>
+        <section class="card summary-produccion">${tableHtml('Producción diaria BDMT', r.produccion, 12)}</section>
+        <section class="card summary-stocks">${tableHtml('Stocks planta FRIMOSA', r.stocks, 20)}</section>
+      </div>
+    </section>
+
+    <section class="dashboard-page" id="page-rolos">
+      <div class="page-title">Rolos</div>
+      <div class="grid">
+        <section class="card span4">${tableHtml('Rolos · ingreso diario', r.rolesDiario, 10)}</section>
+        <section class="card span4">${tableHtml('Rolos · ingreso semanal', r.rolesSemanal, 12)}</section>
+        <section class="card span4">${tableHtml('Rolos · ingreso mensual', r.rolesMensual, 12)}</section>
+        <section class="card span4 chart-card"><h2>Rolos · metros cúbicos diarios</h2><div class="chart-wrap"><canvas id="chartRolosDiario"></canvas></div></section>
+        <section class="card span4 chart-card"><h2>Rolos · metros cúbicos semanales</h2><div class="chart-wrap"><canvas id="chartRolosSemanal"></canvas></div></section>
+        <section class="card span4 chart-card"><h2>Rolos · metros cúbicos mensuales</h2><div class="chart-wrap"><canvas id="chartRolosMensual"></canvas></div></section>
+      </div>
+    </section>
+
+    <section class="dashboard-page" id="page-trozas">
+      <div class="page-title">Trozas</div>
+      <div class="grid">
+        <section class="card span4">${tableHtml('Trozas · ingreso diario', r.trozasDiario, 10)}</section>
+        <section class="card span4">${tableHtml('Trozas · ingreso semanal', r.trozasSemanal, 12)}</section>
+        <section class="card span4">${tableHtml('Trozas · ingreso mensual', r.trozasMensual, 12)}</section>
+        <section class="card span4 chart-card"><h2>Trozas · viajes diarios</h2><div class="chart-wrap"><canvas id="chartTrozasDiario"></canvas></div></section>
+        <section class="card span4 chart-card"><h2>Trozas · viajes semanales</h2><div class="chart-wrap"><canvas id="chartTrozasSemanal"></canvas></div></section>
+        <section class="card span4 chart-card"><h2>Trozas · viajes mensuales</h2><div class="chart-wrap"><canvas id="chartTrozasMensual"></canvas></div></section>
+      </div>
+    </section>
+
+    <section class="dashboard-page" id="page-contrato">
+      <div class="page-title">Contrato UPM</div>
+      <div class="page-note">Por defecto se muestra el año actual. Podés seleccionar cualquier otro año disponible o ver el histórico completo.</div>
+      <div class="contract-toolbar" id="contractYearSelector"></div>
+      <div class="contract-summary" id="contractSummary"></div>
+      <div class="grid">
+        <section class="card span12 chart-card contract-chart-card">
+          <h2>Evolución mensual del contrato</h2>
+          <div class="chart-wrap contract-chart-wrap"><canvas id="chartContratoUPM"></canvas></div>
+        </section>
+        <section class="card span12">${tableHtml('Entregas FAS a UPM PDT · año actual con acumulado histórico', r.contrato, 999)}</section>
+      </div>
+    </section>
+
+    <section class="dashboard-page" id="page-densidades">
+      <div class="card density-embed-card">
+        <iframe class="density-embed" src="./densidades.html" title="Dashboard de densidades" loading="lazy"></iframe>
+      </div>
+    </section>
+
+    <section class="dashboard-page" id="page-tiempos-descarga">
+      <div class="card download-embed-card">
+        <iframe class="download-embed" src="./tiempos-descarga.html" title="Dashboard de tiempos de descarga" loading="lazy"></iframe>
+      </div>
+    </section>
+
+    <section class="dashboard-page" id="page-pilas">
+      <div class="card pilas-embed-card">
+        <iframe class="pilas-embed" title="Dashboard Pilas en Monte" loading="lazy"></iframe>
+      </div>
+    </section>
+
+    <section class="dashboard-page" id="page-mcs-recibidos">
+      <div class="card mcs-recibidos-embed-card">
+        <iframe
+          class="mcs-recibidos-embed"
+          src="https://recibo-resumen.fas-uy.workers.dev/"
+          title="Dashboard MCS Recibidos"
+          loading="lazy"
+          scrolling="no"
+          referrerpolicy="no-referrer"
+          style="overflow:hidden;">
+        </iframe>
+      </div>
+    </section>`;
+  document.getElementById('empty').style.display='none'; document.getElementById('dash').style.display='block';
+  activarNavegacionDashboard();
+  datosRolosActuales = r;
+  datosTrozasActuales = r;
+  datosContratoHistorico = obtenerContratoHistorico(r.contratoFull);
+  // Por defecto se muestra el año calendario actual; el usuario puede seleccionar cualquier otro año disponible.
+  const anioActual = new Date().getFullYear();
+  const aniosDisponibles = añosContratoDisponibles();
+  anioContratoSeleccionado = aniosDisponibles.includes(anioActual) ? String(anioActual) : String(aniosDisponibles.at(-1) || anioActual);
+
+  // Si la vista Rolos está visible por cualquier motivo, dibuja los gráficos de inmediato.
+  if(document.getElementById('page-rolos')?.classList.contains('active')){
+    renderGraficosRolos(r);
   }
 
-  try {
-    const encabezados = [
-      'Año','Mes','FechaRto','Depósito','Remito','Tipo Remito','Monte',
-      'NombreProd2','RtoOrigen','Matricula','Neto','Metros Cubicos','CONTRATO'
-    ];
+  if(document.getElementById('page-trozas')?.classList.contains('active')){
+    renderGraficosTrozas(r);
+  }
 
-    const escaparCSV = valor => {
-      const texto = valor === null || valor === undefined ? '' : String(valor);
-      return `"${texto.replace(/"/g, '""')}"`;
-    };
-
-    const filasCSV = filas.map(r => [
-      valorCampo(r,'anio'),
-      nombreMesRegistro(r),
-      formatearFecha(fechaRegistro(r)),
-      valorCampo(r,'deposito'),
-      valorCampo(r,'remito') == null ? '' : String(valorCampo(r,'remito')),
-      valorCampo(r,'tipoRemito'),
-      valorCampo(r,'monte'),
-      valorCampo(r,'producto'),
-      valorCampo(r,'rtoOrigen') == null ? '' : String(valorCampo(r,'rtoOrigen')),
-      valorCampo(r,'matricula'),
-      numero(valorCampo(r,'neto')).toLocaleString('es-UY', {minimumFractionDigits:2, maximumFractionDigits:2, useGrouping:false}),
-      numero(valorCampo(r,'metrosCubicos')).toLocaleString('es-UY', {minimumFractionDigits:2, maximumFractionDigits:2, useGrouping:false}),
-      valorCampo(r,'contrato')
-    ].map(escaparCSV).join(';'));
-
-    // BOM UTF-8 para que Excel reconozca correctamente tildes, ñ y separador decimal con coma.
-    const contenido = '\uFEFF' + encabezados.map(escaparCSV).join(';') + '\r\n' + filasCSV.join('\r\n');
-    const blob = new Blob([contenido], {type:'text/csv;charset=utf-8;'});
-    const url = URL.createObjectURL(blob);
-    const enlace = document.createElement('a');
-
-    const seleccion = seleccionFiltros();
-    const mesArchivo = seleccion.mes ? MESES[Number(seleccion.mes)-1] : 'todos';
-    const nombreArchivo = `recibo_resumenes_${seleccion.anio || 'todos'}_${mesArchivo}.csv`;
-
-    // Compatibilidad con Edge antiguo / Internet Explorer.
-    if (window.navigator && typeof window.navigator.msSaveOrOpenBlob === 'function') {
-      window.navigator.msSaveOrOpenBlob(blob, nombreArchivo);
-      URL.revokeObjectURL(url);
-      return;
-    }
-
-    enlace.href = url;
-    enlace.download = nombreArchivo;
-    enlace.rel = 'noopener';
-    enlace.style.display = 'none';
-    document.body.appendChild(enlace);
-    enlace.dispatchEvent(new MouseEvent('click', {bubbles:true, cancelable:true, view:window}));
-
-    setTimeout(() => {
-      URL.revokeObjectURL(url);
-      enlace.remove();
-    }, 1500);
-  } catch (error) {
-    console.error('Error al exportar:', error);
-    alert('No se pudo generar el archivo para Excel. Revisá la consola del navegador para más detalles.');
+  if(document.getElementById('page-contrato')?.classList.contains('active')){
+    renderVistaContrato();
   }
 }
-function renderTabla(){
-  const columnas=[
-    ['anio','Año'],
-    ['mes','Mes'],
-    ['fecha','FechaRto'],
-    ['deposito','Depósito'],
-    ['remito','Remito'],
-    ['tipoRemito','Tipo Remito'],
-    ['monte','Monte'],
-    ['producto','NombreProd2'],
-    ['rtoOrigen','RtoOrigen'],
-    ['matricula','Matricula'],
-    ['neto','Neto'],
-    ['metrosCubicos','Metros Cubicos'],
-    ['contrato','CONTRATO']
-  ].filter(([k])=>campos[k] !== null && campos[k] !== undefined);
-  document.getElementById('encabezadoTabla').innerHTML=columnas.map(([,t])=>`<th>${t}</th>`).join('');
-  const filas=filasDetalleOrdenadas().slice(0,LIMITE_TABLA);
-  document.getElementById('cuerpoTabla').innerHTML=filas.length?filas.map(r=>`<tr>${columnas.map(([k])=>{
-    let valor;
-    if(k==='fecha') valor=formatearFecha(fechaRegistro(r));
-    else if(k==='mes') valor=nombreMesRegistro(r);
-    else if(k==='remito' || k==='rtoOrigen') valor=valorCampo(r,k)==null ? '' : String(valorCampo(r,k));
-    else valor=mostrar(valorCampo(r,k));
-    return `<td>${valor}</td>`;
-  }).join('')}</tr>`).join(''):`<tr><td class="empty" colspan="${Math.max(columnas.length,1)}">No hay registros para los filtros seleccionados.</td></tr>`;
-  document.getElementById('notaCampos').textContent=`Se muestran hasta ${LIMITE_TABLA.toLocaleString('es-UY')} registros, ordenados por Remito de menor a mayor. La exportación incluye todos los registros filtrados. Esquema verificado: ${columnasFuente.length} columnas. Filas ajustadas: ${fmt0.format(filasCorregidas)}. Filas descartadas: ${fmt0.format(filasDescartadas)}.`;
-}
-function render(){ renderKPIs(); renderGraficos(); renderTabla(); }
 
-async function cargar(){
-  try{
-    const res = await fetch(JSON_URL, {cache:'no-store'});
-    if(!res.ok) throw new Error(`HTTP ${res.status}`);
+function construirVistasIniciales(){
+  const dash = document.getElementById('dash');
+  if(!dash || dash.querySelector('.dashboard-tabs')) return;
 
-    const json = await res.json();
-    const columnasJSON = Array.isArray(json.columnas) ? json.columnas : [];
-    const lista = Array.isArray(json.datos) ? json.datos : extraerLista(json);
+  const kpis = dash.querySelector('.kpis');
+  const grid = dash.querySelector('.grid');
+  if(!kpis || !grid) return;
 
-    if(!columnasJSON.length) throw new Error('El JSON no contiene el arreglo "columnas".');
-    if(!Array.isArray(lista) || !lista.length) throw new Error('El JSON no contiene registros dentro de "datos".');
+  const cards = Array.from(grid.children);
+  if(cards.length < 10) return;
 
-    columnasFuente = columnasJSON.slice();
-    filasCorregidas = 0;
-    filasDescartadas = 0;
+  const resumenCards = cards.slice(0, 3);
+  if(resumenCards[0]) resumenCards[0].className = 'card summary-montes';
+  if(resumenCards[1]) resumenCards[1].className = 'card summary-produccion';
+  if(resumenCards[2]) resumenCards[2].className = 'card summary-stocks';
 
-    for(const [clave, alias] of Object.entries(ALIAS)) {
-      campos[clave] = encontrarIndice(columnasJSON, alias);
+  const rolosCards = cards.slice(3, 6);
+  const trozasCards = cards.slice(6, 9);
+  const contratoCards = cards.slice(9);
+
+  const crearPagina = (id, titulo, elementos, activa=false, nota='') => {
+    const section = document.createElement('section');
+    section.id = id;
+    section.className = `dashboard-page${activa ? ' active' : ''}`;
+
+    const title = document.createElement('div');
+    title.className = 'page-title';
+    title.textContent = titulo;
+    section.appendChild(title);
+
+    if(nota){
+      const note = document.createElement('div');
+      note.className = 'page-note';
+      note.textContent = nota;
+      section.appendChild(note);
     }
 
-    const indiceAnio = campos.anio;
-    const cantidadColumnas = columnasJSON.length;
+    const pageGrid = document.createElement('div');
+    pageGrid.className = 'grid';
+    elementos.forEach(el => pageGrid.appendChild(el));
+    section.appendChild(pageGrid);
+    return section;
+  };
 
-    // Cada fila se valida contra las 46 columnas declaradas por el JSON.
-    // No se agrega IdTrans porque ese campo no está en columnas[].
-    datosOriginales = lista
-      .map(fila => normalizarFila(fila, cantidadColumnas, indiceAnio))
-      .filter(Boolean)
-      .filter(fila => {
-        const anio = Number(valorCampo(fila, 'anio'));
-        return Number.isFinite(anio) && anio >= 2025;
+  const tabs = document.createElement('div');
+  tabs.className = 'dashboard-tabs';
+  tabs.setAttribute('role', 'tablist');
+  tabs.setAttribute('aria-label', 'Navegación del dashboard');
+  tabs.innerHTML = `
+    <button class="tab-btn active" data-page="page-resumen" type="button">🏠 Resumen</button>
+    <button class="tab-btn" data-page="page-rolos" type="button">🚚 Rolos</button>
+    <button class="tab-btn" data-page="page-trozas" type="button">🪵 Trozas</button>
+    <button class="tab-btn" data-page="page-contrato" type="button">📋 Contrato UPM</button>
+    <button class="tab-btn" data-page="page-densidades" type="button">📈 Densidades</button>
+    <button class="tab-btn" data-page="page-tiempos-descarga" type="button">⏱ Tiempos de descarga</button>
+    <button class="tab-btn" data-page="page-pilas" type="button">🌲 Pilas en Monte</button>
+      <button class="tab-btn" data-page="page-mcs-recibidos" type="button">📦 MCS Recibidos</button>`;
+
+  dash.innerHTML = '';
+  dash.appendChild(tabs);
+
+  const resumen = document.createElement('section');
+  resumen.id = 'page-resumen';
+  resumen.className = 'dashboard-page active';
+  const tituloResumen = document.createElement('div');
+  tituloResumen.className = 'page-title';
+  tituloResumen.textContent = 'Resumen ejecutivo';
+  resumen.appendChild(tituloResumen);
+  resumen.appendChild(kpis);
+  const gridResumen = document.createElement('div');
+  gridResumen.className = 'grid';
+  resumenCards.forEach(el => gridResumen.appendChild(el));
+  resumen.appendChild(gridResumen);
+  dash.appendChild(resumen);
+
+  dash.appendChild(crearPagina('page-rolos','Rolos',rolosCards));
+  dash.appendChild(crearPagina('page-trozas','Trozas',trozasCards));
+  dash.appendChild(crearPagina('page-contrato','Contrato UPM',contratoCards,false,'Año actual con acumulado histórico desde el inicio del contrato.'));
+
+  const paginaDensidades = document.createElement('section');
+  paginaDensidades.id = 'page-densidades';
+  paginaDensidades.className = 'dashboard-page';
+
+  const tituloDensidades = document.createElement('div');
+  tituloDensidades.className = 'page-title';
+  tituloDensidades.textContent = 'Análisis de densidades';
+  paginaDensidades.appendChild(tituloDensidades);
+
+  const notaDensidades = document.createElement('div');
+  notaDensidades.className = 'page-note';
+  notaDensidades.textContent = 'Filtros, detalle, promedios y tendencia de densidad por remito.';
+  paginaDensidades.appendChild(notaDensidades);
+
+  const tarjetaDensidades = document.createElement('div');
+  tarjetaDensidades.className = 'card density-embed-card';
+
+  const iframeDensidades = document.createElement('iframe');
+  iframeDensidades.className = 'density-embed';
+  iframeDensidades.src = './densidades.html';
+  iframeDensidades.title = 'Dashboard de densidades';
+  iframeDensidades.loading = 'lazy';
+
+  tarjetaDensidades.appendChild(iframeDensidades);
+  paginaDensidades.appendChild(tarjetaDensidades);
+  dash.appendChild(paginaDensidades);
+
+  const paginaTiempos = document.createElement('section');
+  paginaTiempos.id = 'page-tiempos-descarga';
+  paginaTiempos.className = 'dashboard-page';
+
+  const tarjetaTiempos = document.createElement('div');
+  tarjetaTiempos.className = 'card download-embed-card';
+
+  const iframeTiempos = document.createElement('iframe');
+  iframeTiempos.className = 'download-embed';
+  iframeTiempos.src = './tiempos-descarga.html';
+  iframeTiempos.title = 'Dashboard de tiempos de descarga';
+  iframeTiempos.loading = 'lazy';
+
+  tarjetaTiempos.appendChild(iframeTiempos);
+  paginaTiempos.appendChild(tarjetaTiempos);
+  dash.appendChild(paginaTiempos);
+
+  const paginaPilas = document.createElement('section');
+  paginaPilas.id = 'page-pilas';
+  paginaPilas.className = 'dashboard-page';
+
+  const tarjetaPilas = document.createElement('div');
+  tarjetaPilas.className = 'card pilas-embed-card';
+
+  const iframePilas = document.createElement('iframe');
+  iframePilas.className = 'pilas-embed';
+  iframePilas.title = 'Dashboard Pilas en Monte';
+  iframePilas.loading = 'lazy';
+
+  tarjetaPilas.appendChild(iframePilas);
+  paginaPilas.appendChild(tarjetaPilas);
+  dash.appendChild(paginaPilas);
+
+  const paginaMcsRecibidos = document.createElement('section');
+  paginaMcsRecibidos.id = 'page-mcs-recibidos';
+  paginaMcsRecibidos.className = 'dashboard-page';
+
+  const tarjetaMcsRecibidos = document.createElement('div');
+  tarjetaMcsRecibidos.className = 'card mcs-recibidos-embed-card';
+
+  const iframeMcsRecibidos = document.createElement('iframe');
+  iframeMcsRecibidos.className = 'mcs-recibidos-embed';
+  iframeMcsRecibidos.src = 'https://recibo-resumen.fas-uy.workers.dev/';
+  iframeMcsRecibidos.title = 'Dashboard MCS Recibidos';
+  iframeMcsRecibidos.loading = 'lazy';
+  iframeMcsRecibidos.scrolling = 'no';
+  iframeMcsRecibidos.style.overflow = 'hidden';
+  iframeMcsRecibidos.referrerPolicy = 'no-referrer';
+
+  tarjetaMcsRecibidos.appendChild(iframeMcsRecibidos);
+  paginaMcsRecibidos.appendChild(tarjetaMcsRecibidos);
+  dash.appendChild(paginaMcsRecibidos);
+
+  activarNavegacionDashboard();
+}
+
+function pareceNumeroEstatico(texto){
+  const v = String(texto || '').trim();
+  return /^-?(?:\d{1,3}(?:\.\d{3})*|\d+)(?:,\d+)?$/.test(v);
+}
+
+function formatearTablasIniciales(){
+  document.querySelectorAll('section.card').forEach(section=>{
+    const titulo = section.querySelector('h2')?.textContent || '';
+    const t = normalizarTexto(titulo);
+    const encabezados = [...section.querySelectorAll('thead th')].map(th=>normalizarTexto(th.textContent));
+
+    section.querySelectorAll('tbody tr').forEach(fila=>{
+      [...fila.children].forEach((celda, i)=>{
+        if(celda.querySelector('.progress-bar') || celda.querySelector('.progress-text')) return;
+        const valor = celda.textContent.trim();
+        const h = encabezados[i] || '';
+        if(!pareceNumeroEstatico(valor)) return;
+
+        let decimales = null;
+        if(t === 'saldos por monte') decimales = 2;
+        else if(t === 'produccion diaria bdmt' && h !== 'mes' && h !== 'date' && h !== 'dia') decimales = 2;
+        else if(t === 'stocks planta frimosa') decimales = 0;
+        else if(t.includes('rolos')) decimales = (h === 'dia' || h === 'semana' || h === 'mes' || h === 'total camiones') ? 0 : 2;
+        else if(t.includes('trozas')) decimales = 0;
+
+        if(decimales !== null) celda.textContent = formatearNumero(valor, decimales);
       });
-
-    // Calcular la fecha una única vez por fila.
-    datosOriginales.forEach(fila => {
-      fila.__fecha = parseFecha(valorCampo(fila, 'fecha'));
     });
+  });
+}
 
-    const faltantes = ['anio','mes','deposito','contrato','monte','neto','matricula','tipoRemito']
-      .filter(clave => campos[clave] === null || campos[clave] === undefined);
+function actualizarEstadoDatos(texto, esError=false){
+  const status = document.getElementById('dataStatus');
+  if(!status) return;
+  status.innerHTML = `<span class="pill" style="${esError ? 'background:rgba(255,94,108,.14);color:#ffd0d5' : ''}">${texto}</span>`;
+}
 
-    const aviso = document.getElementById('aviso');
-    if(faltantes.length){
-      aviso.style.display='block';
-      aviso.textContent=`No se detectaron estas columnas: ${faltantes.join(', ')}.`;
-    }
+const URL_DATOS_JSON = 'https://dl.dropbox.com/scl/fi/cnuk9qcab796c071c7nek/datos.json?rlkey=gbe8cqw58ym1ayedjb66uej1r&dl=0';
 
-    inicializarFiltros();
-    seleccionarPeriodoActual();
-    aplicarFiltros();
+async function cargarDatosAutomaticos(){
+  actualizarEstadoDatos('Cargando datos publicados desde Dropbox…');
+  try{
+    const separadorCache = URL_DATOS_JSON.includes('?') ? '&' : '?';
+    const respuesta = await fetch(`${URL_DATOS_JSON}${separadorCache}ts=${Date.now()}`, {cache:'no-store'});
+    if(!respuesta.ok) throw new Error(`HTTP ${respuesta.status}`);
 
-    textoActualizacion = json.actualizado ? ` · Actualizado: ${json.actualizado}` : '';
-    render();
-  }catch(err){
-    const a=document.getElementById('aviso');
-    a.classList.add('error');
-    a.style.display='block';
-    a.innerHTML=`No fue posible cargar el JSON desde Dropbox.<br><strong>${err.message}</strong><br>Verificá que el enlace sea público y que Dropbox permita CORS. En Cloudflare, lo más estable es consumirlo mediante <code>/api/datos</code>.`;
-    document.getElementById('estado').textContent='Error de carga';
+    const datos = await respuesta.json();
+    renderDatos(datos);
+    const fecha = datos.actualizado ? formatearFechaTitulo(datos.actualizado) : formatearFechaTitulo(new Date());
+    actualizarEstadoDatos(`Datos actualizados: ${fecha}`);
+  }catch(error){
+    console.error('No se pudo cargar datos.json desde Dropbox:', error);
+    document.getElementById('dash').style.display = 'none';
+    document.getElementById('empty').style.display = 'block';
+    document.getElementById('empty').innerHTML = `<b>No fue posible cargar los datos</b><p class="muted">Verificá que el enlace de Dropbox esté público, que el archivo sea JSON válido y que el navegador permita cargarlo desde esa URL.</p>`;
+    actualizarEstadoDatos('Error al cargar datos desde Dropbox', true);
   }
 }
 
-cargar();
+cargarDatosAutomaticos();
+
 </script>
-</body>
-</html>
+
+</body></html>
