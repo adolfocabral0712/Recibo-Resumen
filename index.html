@@ -402,6 +402,11 @@ function inicializarFiltros() {
     CONFIG_FILTROS.forEach(({id}) => document.getElementById(id).value = '');
     aplicarFiltros();
   });
+
+  const btnExportar = document.getElementById('btnExportar');
+  if (btnExportar) {
+    btnExportar.addEventListener('click', exportarExcel);
+  }
 }
 
 function aplicarFiltros() {
@@ -773,16 +778,24 @@ function exportarExcel(){
     const mesArchivo = seleccion.mes ? MESES[Number(seleccion.mes)-1] : 'todos';
     const nombreArchivo = `recibo_resumenes_${seleccion.anio || 'todos'}_${mesArchivo}.csv`;
 
+    // Compatibilidad con Edge antiguo / Internet Explorer.
+    if (window.navigator && typeof window.navigator.msSaveOrOpenBlob === 'function') {
+      window.navigator.msSaveOrOpenBlob(blob, nombreArchivo);
+      URL.revokeObjectURL(url);
+      return;
+    }
+
     enlace.href = url;
     enlace.download = nombreArchivo;
+    enlace.rel = 'noopener';
     enlace.style.display = 'none';
     document.body.appendChild(enlace);
-    enlace.click();
+    enlace.dispatchEvent(new MouseEvent('click', {bubbles:true, cancelable:true, view:window}));
 
     setTimeout(() => {
       URL.revokeObjectURL(url);
       enlace.remove();
-    }, 1000);
+    }, 1500);
   } catch (error) {
     console.error('Error al exportar:', error);
     alert('No se pudo generar el archivo para Excel. Revisá la consola del navegador para más detalles.');
