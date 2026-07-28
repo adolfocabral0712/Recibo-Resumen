@@ -393,6 +393,27 @@ function actualizarOpcionesFiltros() {
   });
 }
 
+function seleccionarPeriodoActual() {
+  const hoy = new Date();
+  const anioActual = String(hoy.getFullYear());
+  const numeroMesActual = hoy.getMonth() + 1;
+  const prefijoMesActual = `${String(numeroMesActual).padStart(2,'0')} - `;
+
+  const selectAnio = document.getElementById('fAnio');
+  if ([...selectAnio.options].some(opcion => opcion.value === anioActual)) {
+    selectAnio.value = anioActual;
+  }
+
+  // Al seleccionar el año, se recalculan los meses disponibles para ese año.
+  actualizarOpcionesFiltros();
+
+  const selectMes = document.getElementById('fMes');
+  const opcionMesActual = [...selectMes.options].find(opcion => opcion.value.startsWith(prefijoMesActual));
+  if (opcionMesActual) {
+    selectMes.value = opcionMesActual.value;
+  }
+}
+
 function inicializarFiltros() {
   actualizarOpcionesFiltros();
   CONFIG_FILTROS.forEach(({id}) => {
@@ -879,6 +900,7 @@ async function cargar(){
     }
 
     inicializarFiltros();
+    seleccionarPeriodoActual();
     aplicarFiltros();
 
     textoActualizacion = json.actualizado ? ` · Actualizado: ${json.actualizado}` : '';
