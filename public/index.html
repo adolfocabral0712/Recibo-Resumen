@@ -140,7 +140,7 @@
 <script>
 'use strict';
 
-const JSON_URL = 'https://dl.dropbox.com/scl/fi/kud6q42l7ayvrm3tkje4c/RECIBO-RESUMENES.json?rlkey=a9hv1g2x14t91al141ado7owh&dl=1';
+const JSON_URL = '/api/datos';
 const FECHA_MINIMA = new Date(2025, 0, 1);
 const LIMITE_TABLA = 500;
 
@@ -296,12 +296,23 @@ function valorCampo(r, nombre) { const c = campos[nombre]; return c !== null && 
 function fechaRegistro(r) { return r.__fecha; }
 function anioRegistro(r) { const f=fechaRegistro(r); return f ? f.getFullYear() : Number(valorCampo(r,'anio')) || null; }
 function mesRegistro(r) {
-  // El mes se toma EXCLUSIVAMENTE de la columna "Mes" del JSON.
-  // No se calcula a partir de FechaRto.
+  // El mes se toma de la columna "Mes" del JSON.
+  // Reconoce tanto "Setiembre" como "Septiembre".
   const v = valorCampo(r, 'mes');
   const n = Number(v);
+
   if (n >= 1 && n <= 12) return n;
-  const i = MESES.findIndex(m => normalizar(m) === normalizar(v));
+
+  let nombre = normalizar(v);
+
+  if (nombre === 'setiembre') {
+    nombre = 'septiembre';
+  }
+
+  const i = MESES.findIndex(
+    mes => normalizar(mes) === nombre
+  );
+
   return i >= 0 ? i + 1 : null;
 }
 function nombreMesRegistro(r) {
@@ -394,23 +405,39 @@ function actualizarOpcionesFiltros() {
 }
 
 function seleccionarPeriodoActual() {
-  const hoy = new Date();
-  const anioActual = String(hoy.getFullYear());
-  const numeroMesActual = hoy.getMonth() + 1;
-  const prefijoMesActual = `${String(numeroMesActual).padStart(2,'0')} - `;
+  // Selecciona automáticamente el último período disponible en el JSON.
+  const periodos = datosOriginales
+    .map(r => ({
+      anio: anioRegistro(r),
+      mes: mesRegistro(r)
+    }))
+    .filter(p => p.anio && p.mes)
+    .sort((a, b) => {
+      if (a.anio !== b.anio) return b.anio - a.anio;
+      return b.mes - a.mes;
+    });
+
+  if (!periodos.length) return;
+
+  const ultimoPeriodo = periodos[0];
 
   const selectAnio = document.getElementById('fAnio');
-  if ([...selectAnio.options].some(opcion => opcion.value === anioActual)) {
-    selectAnio.value = anioActual;
+  if ([...selectAnio.options].some(
+    opcion => opcion.value === String(ultimoPeriodo.anio)
+  )) {
+    selectAnio.value = String(ultimoPeriodo.anio);
   }
 
-  // Al seleccionar el año, se recalculan los meses disponibles para ese año.
   actualizarOpcionesFiltros();
 
   const selectMes = document.getElementById('fMes');
-  const opcionMesActual = [...selectMes.options].find(opcion => opcion.value.startsWith(prefijoMesActual));
-  if (opcionMesActual) {
-    selectMes.value = opcionMesActual.value;
+  const prefijoMes = `${String(ultimoPeriodo.mes).padStart(2, '0')} - `;
+  const opcionMes = [...selectMes.options].find(
+    opcion => opcion.value.startsWith(prefijoMes)
+  );
+
+  if (opcionMes) {
+    selectMes.value = opcionMes.value;
   }
 }
 
