@@ -524,7 +524,7 @@ function renderKPIs(){
   document.getElementById('kMcsViaje').textContent = fmt2.format(mcsPorViaje);
   document.getElementById('kExportacion').textContent = fmt2.format(totalMcsExportacion);
 
-  const resumenDepositos = new Map();
+  const registrosPorDeposito = new Map();
 
   recibidos.forEach(r => {
     const deposito = texto(r, 'deposito') || 'Sin depósito';
@@ -532,27 +532,56 @@ function renderKPIs(){
     // Polo Logístico no se muestra en el detalle de MCS x viaje por depósito.
     if (normalizar(deposito) === 'polo logistico') return;
 
-    if (!resumenDepositos.has(deposito)) {
-      resumenDepositos.set(deposito, {
-        mcs: 0,
-        remitos: new Set()
-      });
+    if (!registrosPorDeposito.has(deposito)) {
+      registrosPorDeposito.set(deposito, []);
     }
 
-    const resumen = resumenDepositos.get(deposito);
-    resumen.mcs += numero(valorCampo(r, 'metrosCubicos'));
-
-    const remito = texto(r, 'remito');
-    if (remito !== '') resumen.remitos.add(remito);
+    registrosPorDeposito.get(deposito).push(r);
   });
 
-  const filasDepositos = [...resumenDepositos.entries()]
-    .map(([deposito, resumen]) => ({
-      deposito,
-      promedio: resumen.remitos.size > 0
-        ? resumen.mcs / resumen.remitos.size
-        : 0
-    }))
+  const filasDepositos = [...registrosPorDeposito.entries()]
+    .map(([deposito, registros]) => {
+      let registrosCalculo = registros;
+      const esUPM = normalizar(deposito).includes('upm');
+
+      if (esUPM) {
+        const hayRegistrosPosterioresAl15 = registros.some(r => {
+          const fecha = fechaRegistro(r);
+          return fecha && fecha.getDate() > 15;
+        });
+
+        const hayCierreMensual = registros.some(r => {
+          const fecha = fechaRegistro(r);
+          const mcs = numero(valorCampo(r, 'metrosCubicos'));
+          return fecha && fecha.getDate() > 15 && mcs > 0;
+        });
+
+        // Si ya hay viajes después del día 15 pero todavía no apareció el
+        // MCS del cierre mensual, se usa únicamente el período cerrado al 15.
+        if (hayRegistrosPosterioresAl15 && !hayCierreMensual) {
+          registrosCalculo = registros.filter(r => {
+            const fecha = fechaRegistro(r);
+            return fecha && fecha.getDate() <= 15;
+          });
+        }
+      }
+
+      const mcs = registrosCalculo.reduce(
+        (s, r) => s + numero(valorCampo(r, 'metrosCubicos')),
+        0
+      );
+
+      const remitos = new Set(
+        registrosCalculo
+          .map(r => texto(r, 'remito'))
+          .filter(remito => remito !== '')
+      );
+
+      return {
+        deposito,
+        promedio: remitos.size > 0 ? mcs / remitos.size : 0
+      };
+    })
     .sort((a, b) => a.deposito.localeCompare(
       b.deposito,
       'es',
