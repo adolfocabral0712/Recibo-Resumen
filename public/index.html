@@ -552,23 +552,33 @@ function renderKPIs(){
       let registrosCalculo = registrosBase;
 
       if (esUPM) {
-        const hayRegistrosPosterioresAl15 = registrosBase.some(r => {
-          const fecha = fechaRegistro(r);
-          return fecha && fecha.getDate() > 15;
-        });
+        const fechasCierre = [...new Set(
+          registrosBase
+            .filter(r => numero(valorCampo(r, 'metrosCubicos')) > 0)
+            .map(r => {
+              const fecha = fechaRegistro(r);
+              return fecha
+                ? new Date(fecha.getFullYear(), fecha.getMonth(), fecha.getDate()).getTime()
+                : null;
+            })
+            .filter(fecha => fecha !== null)
+        )].sort((a, b) => a - b);
 
-        const hayCierreMensual = registrosBase.some(r => {
-          const fecha = fechaRegistro(r);
-          const mcs = numero(valorCampo(r, 'metrosCubicos'));
-          return fecha && fecha.getDate() > 15 && mcs > 0;
-        });
-
-        // Si ya hay viajes después del día 15 pero todavía no apareció el
-        // MCS del cierre mensual, se usa únicamente el período cerrado al 15.
-        if (hayRegistrosPosterioresAl15 && !hayCierreMensual) {
+        // El período siempre viene definido por la columna Mes del JSON.
+        // Si UPM tiene un solo cierre cargado, se toman todos los viajes de
+        // ese Mes desde su primera fecha hasta la fecha real de ese cierre.
+        // Cuando aparece un segundo cierre, se calcula el Mes completo.
+        if (fechasCierre.length === 1) {
+          const fechaPrimerCierre = fechasCierre[0];
           registrosCalculo = registrosBase.filter(r => {
             const fecha = fechaRegistro(r);
-            return fecha && fecha.getDate() <= 15;
+            if (!fecha) return false;
+            const fechaDia = new Date(
+              fecha.getFullYear(),
+              fecha.getMonth(),
+              fecha.getDate()
+            ).getTime();
+            return fechaDia <= fechaPrimerCierre;
           });
         }
       }
@@ -580,6 +590,7 @@ function renderKPIs(){
 
       const remitos = new Set(
         registrosCalculo
+          .filter(r => normalizar(texto(r, 'tipoRemito')) === 'entrada')
           .map(r => texto(r, 'remito'))
           .filter(remito => remito !== '')
       );
