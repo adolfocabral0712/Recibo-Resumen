@@ -521,6 +521,8 @@ function renderKPIs(){
 
   const registrosPorDeposito = new Map();
 
+  // La tabla respeta exactamente el Año y el Mes seleccionados desde
+  // las columnas correspondientes del JSON.
   recibidos.forEach(r => {
     const deposito = texto(r, 'deposito') || 'Sin depósito';
 
