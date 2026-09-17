@@ -536,16 +536,26 @@ function renderKPIs(){
 
   const filasDepositos = [...registrosPorDeposito.entries()]
     .map(([deposito, registros]) => {
-      let registrosCalculo = registros;
       const esUPM = normalizar(deposito).includes('upm');
+      const registrosBase = esUPM
+        ? registros.filter(r => {
+            const origen = normalizar(texto(r, 'origen'));
+            const esOrigenExcluido =
+              origen.startsWith('b3r upm apatia') &&
+              origen.includes('upm paso de los toros');
+            return !esOrigenExcluido;
+          })
+        : registros;
+
+      let registrosCalculo = registrosBase;
 
       if (esUPM) {
-        const hayRegistrosPosterioresAl15 = registros.some(r => {
+        const hayRegistrosPosterioresAl15 = registrosBase.some(r => {
           const fecha = fechaRegistro(r);
           return fecha && fecha.getDate() > 15;
         });
 
-        const hayCierreMensual = registros.some(r => {
+        const hayCierreMensual = registrosBase.some(r => {
           const fecha = fechaRegistro(r);
           const mcs = numero(valorCampo(r, 'metrosCubicos'));
           return fecha && fecha.getDate() > 15 && mcs > 0;
@@ -554,7 +564,7 @@ function renderKPIs(){
         // Si ya hay viajes después del día 15 pero todavía no apareció el
         // MCS del cierre mensual, se usa únicamente el período cerrado al 15.
         if (hayRegistrosPosterioresAl15 && !hayCierreMensual) {
-          registrosCalculo = registros.filter(r => {
+          registrosCalculo = registrosBase.filter(r => {
             const fecha = fechaRegistro(r);
             return fecha && fecha.getDate() <= 15;
           });
