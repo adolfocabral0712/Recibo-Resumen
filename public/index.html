@@ -113,8 +113,6 @@
     <article class="card"><div class="name">MCS recibidos</div><div class="value" id="kMcsRecibidos">0</div><div class="detail">Suma de Metros Cubicos sin exportación</div></article>
     <article class="card">
       <div class="name">MCS x viaje</div>
-      <div class="value" id="kMcsViaje">0</div>
-      <div class="detail">MCS recibidos ÷ cantidad de remitos recibidos</div>
       <div class="deposito-resumen">
         <table aria-label="MCS por viaje y depósito">
           <thead><tr><th>Depósito</th><th>MCS x viaje</th></tr></thead>
@@ -517,11 +515,8 @@ function renderKPIs(){
     0
   );
 
-  const mcsPorViaje = remitosUnicos > 0 ? totalMcsRecibidos / remitosUnicos : 0;
-
   document.getElementById('kRegistros').textContent = fmt0.format(remitosUnicos);
   document.getElementById('kMcsRecibidos').textContent = fmt2.format(totalMcsRecibidos);
-  document.getElementById('kMcsViaje').textContent = fmt2.format(mcsPorViaje);
   document.getElementById('kExportacion').textContent = fmt2.format(totalMcsExportacion);
 
   const registrosPorDeposito = new Map();
@@ -530,7 +525,7 @@ function renderKPIs(){
     const deposito = texto(r, 'deposito') || 'Sin depósito';
 
     // Polo Logístico no se muestra en el detalle de MCS x viaje por depósito.
-    if (normalizar(deposito) === 'polo logistico') return;
+    if (normalizar(deposito).includes('polo logistico')) return;
 
     if (!registrosPorDeposito.has(deposito)) {
       registrosPorDeposito.set(deposito, []);
