@@ -7,21 +7,21 @@
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
   <style>
     :root {
-      --bg: #0b1220;
-      --panel: #111b2e;
-      --panel2: #17243a;
-      --border: #263650;
-      --text: #edf3fb;
-      --muted: #9eacc2;
-      --accent: #48b0f7;
-      --good: #39d98a;
-      --danger: #ff6b6b;
+      --bg: #F4F3F1;
+      --panel: #FFFFFF;
+      --panel2: #F4F3F1;
+      --border: #DDD9D4;
+      --text: #1F1F1F;
+      --muted: #6B6B6B;
+      --accent: #C65312;
+      --good: #E86F18;
+      --danger: #6B6B6B;
       --shadow: 0 12px 28px rgba(0,0,0,.25);
     }
     * { box-sizing: border-box; }
     body {
       margin: 0;
-      background: linear-gradient(145deg, #09101d 0%, #101a2c 100%);
+      background: linear-gradient(145deg, #FFFFFF 0%, #F4F3F1 100%);
       color: var(--text);
       font-family: Inter, Segoe UI, Arial, sans-serif;
       min-height: 100vh;
@@ -59,7 +59,7 @@
     .deposito-resumen table { width:100%; min-width:0; border-collapse:collapse; }
     .deposito-resumen th,
     .deposito-resumen td { padding:7px 8px; text-align:center; white-space:normal; }
-    .deposito-resumen th { position:static; background:#1a2941; color:#cbd7e7; font-size:10px; }
+    .deposito-resumen th { position:static; background:#C65312; color:#FFFFFF; font-size:10px; }
     .deposito-resumen td { font-size:11px; }
     .deposito-resumen td:last-child { color:var(--accent); font-weight:800; }
     .deposito-resumen tr:last-child td { border-bottom:0; }
@@ -69,19 +69,19 @@
     .panel h2 { margin:0 0 15px; font-size:17px; }
     .panel-title-row { display:flex; justify-content:space-between; align-items:center; gap:12px; margin-bottom:15px; }
     .panel-title-row h2 { margin:0; }
-    .btn-exportar { width:auto; min-width:180px; background:#176b43; border-color:#2a9f69; padding:10px 14px; }
-    .btn-exportar:hover { border-color:#39d98a; }
+    .btn-exportar { width:auto; min-width:180px; background:#C65312; border-color:#C65312; color:#FFFFFF; padding:10px 14px; }
+    .btn-exportar:hover { border-color:#E86F18; }
     .chart-wrap { height:350px; }
     .chart-wrap-origen { height:500px; overflow-x:auto; overflow-y:hidden; padding-bottom:8px; }
     .panel-origen { margin-top:0; }
-    .warning { display:none; margin-bottom:16px; background:#392b16; border:1px solid #7a5720; color:#ffd68b; border-radius:12px; padding:12px 14px; }
-    .error { background:#421f27; border-color:#863344; color:#ffc0c8; }
+    .warning { display:none; margin-bottom:16px; background:rgba(255,184,107,.18); border:1px solid #FFB86B; color:#1F1F1F; border-radius:12px; padding:12px 14px; }
+    .error { background:rgba(107,107,107,.10); border-color:#6B6B6B; color:#1F1F1F; }
     .table-wrap { overflow:auto; max-height:520px; border-radius:11px; border:1px solid var(--border); }
     table { width:100%; border-collapse:collapse; min-width:950px; }
-    th { position:sticky; top:0; z-index:2; background:#1a2941; color:#cbd7e7; font-size:12px; text-transform:uppercase; }
+    th { position:sticky; top:0; z-index:2; background:#C65312; color:#FFFFFF; font-size:12px; text-transform:uppercase; }
     th, td { padding:11px 10px; border-bottom:1px solid var(--border); text-align:center; white-space:nowrap; }
     td { font-size:13px; }
-    tbody tr:hover { background:rgba(255,255,255,.025); }
+    tbody tr:hover { background:rgba(198,83,18,.06); }
     .empty { color:var(--muted); text-align:center; padding:30px; }
     .field-note { color:var(--muted); font-size:12px; margin-top:10px; line-height:1.5; }
     @media(max-width:1050px){ .filters{grid-template-columns:repeat(3,1fr)} .cards{grid-template-columns:repeat(2,1fr)} .grid{grid-template-columns:1fr} }
@@ -646,7 +646,7 @@ const etiquetasColumnas = {
   afterDatasetsDraw(chart) {
     const {ctx, chartArea} = chart;
     ctx.save();
-    ctx.fillStyle = '#edf3fb';
+    ctx.fillStyle = '#1F1F1F';
     ctx.font = '600 11px Segoe UI, Arial, sans-serif';
     ctx.textAlign = 'center';
     ctx.textBaseline = 'bottom';
@@ -673,7 +673,6 @@ const etiquetasColumnasApiladas = {
   afterDatasetsDraw(chart) {
     const {ctx} = chart;
     ctx.save();
-    ctx.fillStyle = '#ffffff';
     ctx.font = '600 10px Segoe UI, Arial, sans-serif';
     ctx.textAlign = 'center';
     ctx.textBaseline = 'middle';
@@ -689,6 +688,7 @@ const etiquetasColumnasApiladas = {
         const alto = Math.abs((barra.base ?? barra.y) - barra.y);
         if (alto < 16) return;
 
+        ctx.fillStyle = dataset.backgroundColor === '#FFB86B' ? '#1F1F1F' : '#FFFFFF';
         const centroY = barra.y + alto / 2;
         ctx.fillText(fmt2.format(valor), barra.x, centroY);
       });
@@ -702,7 +702,7 @@ const etiquetasFinBarra = {
   afterDatasetsDraw(chart) {
     const {ctx, chartArea} = chart;
     ctx.save();
-    ctx.fillStyle = '#edf3fb';
+    ctx.fillStyle = '#1F1F1F';
     ctx.font = '600 11px Segoe UI, Arial, sans-serif';
     ctx.textAlign = 'left';
     ctx.textBaseline = 'middle';
@@ -722,6 +722,9 @@ const etiquetasFinBarra = {
   }
 };
 
+const PALETA_GRAFICOS = ['#C65312', '#E86F18', '#FFB86B', '#6B6B6B'];
+function colorGrafico(indice){ return PALETA_GRAFICOS[indice % PALETA_GRAFICOS.length]; }
+
 function renderGraficos(){
   const viajes = obtenerViajesValidos();
   const clavesMes = [...new Set(viajes.map(r=>{
@@ -737,7 +740,9 @@ function renderGraficos(){
     return `${MESES[Number(m)-1]} ${a}`;
   });
 
-  const datasetsMes = depositos.map(deposito => ({
+  const datasetsMes = depositos.map((deposito, indice) => ({
+    backgroundColor: colorGrafico(indice),
+    borderColor: colorGrafico(indice),
     label: deposito,
     data: clavesMes.map(clave => {
       const [anio, mes] = clave.split('|');
@@ -756,12 +761,12 @@ function renderGraficos(){
     maintainAspectRatio:false,
     interaction:{mode:'index',intersect:false},
     plugins:{
-      legend:{display:true,position:'bottom',labels:{color:'#aebbd0',boxWidth:12}},
+      legend:{display:true,position:'bottom',labels:{color:'#6B6B6B',boxWidth:12}},
       tooltip:{callbacks:{label:(ctx)=>`${ctx.dataset.label}: ${fmt2.format(ctx.parsed.y)} MCS`}}
     },
     scales:{
-      x:{stacked:false,ticks:{color:'#aebbd0'},grid:{color:'rgba(255,255,255,.05)'}},
-      y:{stacked:false,beginAtZero:true,ticks:{color:'#aebbd0'},grid:{color:'rgba(255,255,255,.07)'},title:{display:true,text:'MCS',color:'#aebbd0'}}
+      x:{stacked:false,ticks:{color:'#6B6B6B'},grid:{color:'rgba(107,107,107,.14)'}},
+      y:{stacked:false,beginAtZero:true,ticks:{color:'#6B6B6B'},grid:{color:'rgba(107,107,107,.18)'},title:{display:true,text:'MCS',color:'#6B6B6B'}}
     }
   };
 
@@ -775,7 +780,7 @@ function renderGraficos(){
       layout:{padding:{top:22}},
       plugins:{
         ...base.plugins,
-        legend:{display:true,position:'bottom',labels:{color:'#aebbd0',boxWidth:12}},
+        legend:{display:true,position:'bottom',labels:{color:'#6B6B6B',boxWidth:12}},
         tooltip:{callbacks:{label:(ctx)=>`${ctx.dataset.label}: ${fmt2.format(ctx.parsed.y)} MCS`}}
       }
     }
@@ -800,6 +805,8 @@ function renderGraficos(){
         borderWidth:1,
         borderRadius:5,
         maxBarThickness:54,
+        backgroundColor:'#C65312',
+        borderColor:'#C65312',
         categoryPercentage:0.78,
         barPercentage:0.82
       }]
@@ -816,7 +823,7 @@ function renderGraficos(){
       scales:{
         x:{
           ticks:{
-            color:'#aebbd0',
+            color:'#6B6B6B',
             autoSkip:false,
             maxRotation:55,
             minRotation:55,
@@ -836,13 +843,13 @@ function renderGraficos(){
               return lineas.slice(0,3);
             }
           },
-          grid:{color:'rgba(255,255,255,.05)'}
+          grid:{color:'rgba(107,107,107,.14)'}
         },
         y:{
           beginAtZero:true,
-          ticks:{color:'#aebbd0'},
-          grid:{color:'rgba(255,255,255,.07)'},
-          title:{display:true,text:'MCS',color:'#aebbd0'}
+          ticks:{color:'#6B6B6B'},
+          grid:{color:'rgba(107,107,107,.18)'},
+          title:{display:true,text:'MCS',color:'#6B6B6B'}
         }
       }
     }
@@ -851,7 +858,9 @@ function renderGraficos(){
   const productos = [...new Set(viajes.map(r=>texto(r,'producto')).filter(Boolean))]
     .sort((a,b)=>a.localeCompare(b,'es',{numeric:true,sensitivity:'base'}));
 
-  const datasetsProductoMes = productos.map(producto => ({
+  const datasetsProductoMes = productos.map((producto, indice) => ({
+    backgroundColor: colorGrafico(indice),
+    borderColor: colorGrafico(indice),
     label: producto,
     data: clavesMes.map(clave => {
       const [anio, mes] = clave.split('|');
@@ -878,12 +887,12 @@ function renderGraficos(){
       layout:{padding:{top:14}},
       plugins:{
         ...base.plugins,
-        legend:{display:true,position:'bottom',labels:{color:'#aebbd0',boxWidth:12}},
+        legend:{display:true,position:'bottom',labels:{color:'#6B6B6B',boxWidth:12}},
         tooltip:{callbacks:{label:(ctx)=>`${ctx.dataset.label}: ${fmt2.format(ctx.parsed.y)} MCS`}}
       },
       scales:{
-        x:{stacked:false,ticks:{color:'#aebbd0'},grid:{color:'rgba(255,255,255,.05)'},offset:true},
-        y:{stacked:false,beginAtZero:true,ticks:{color:'#aebbd0'},grid:{color:'rgba(255,255,255,.07)'},title:{display:true,text:'MCS',color:'#aebbd0'}}
+        x:{stacked:false,ticks:{color:'#6B6B6B'},grid:{color:'rgba(107,107,107,.14)'},offset:true},
+        y:{stacked:false,beginAtZero:true,ticks:{color:'#6B6B6B'},grid:{color:'rgba(107,107,107,.18)'},title:{display:true,text:'MCS',color:'#6B6B6B'}}
       }
     }
   });
